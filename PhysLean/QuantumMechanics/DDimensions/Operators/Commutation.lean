@@ -13,19 +13,18 @@ import PhysLean.QuantumMechanics.DDimensions.Operators.AngularMomentum
 namespace QuantumMechanics
 noncomputable section
 open Constants
-open SchwartzMap
+open SchwartzMap ContinuousLinearMap
 
 /-
 ## Position / position commutators
 -/
 
 /-- `[xᵢ, xⱼ] = 0` -/
-@[sorryful]
 lemma position_commutation_position {d : ℕ} (i j : Fin d) : ⁅𝐱[i], 𝐱[j]⁆ = 0 := by
   dsimp only [Bracket.bracket]
   ext ψ x
-  simp only [ContinuousLinearMap.coe_sub', ContinuousLinearMap.coe_mul, Pi.sub_apply, sub_apply,
-    Function.comp_apply, ContinuousLinearMap.zero_apply, zero_apply, positionOperator_apply]
+  simp only [coe_sub', coe_mul, Pi.sub_apply, Function.comp_apply, SchwartzMap.sub_apply,
+    ContinuousLinearMap.zero_apply, SchwartzMap.zero_apply, positionOperator_apply]
   ring
 
 /-
