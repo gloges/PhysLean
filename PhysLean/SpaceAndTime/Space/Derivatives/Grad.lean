@@ -116,7 +116,8 @@ lemma grad_smul (f : Space d → ℝ) (k : ℝ)
   unfold grad
   ext x i
   simp only [Pi.smul_apply]
-  rw [deriv_smul]
+  simp only [PiLp.smul_apply, smul_eq_mul]
+  rw [deriv_const_smul]
   rfl
   exact hf
 
