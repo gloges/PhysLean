@@ -15,6 +15,10 @@ noncomputable section
 open Constants
 open SchwartzMap ContinuousLinearMap
 
+example (f : Fin n → 𝓢(ℝ, ℂ)): (∑ i, f i) x = ∑ i, f i x := by
+  -- simp only [SchwartzMap.sum_apply]
+  sorry
+
 -- TODO: Is there a mathlib way to do this?
 def kroneckerDelta {d : ℕ} (i j : Fin d) : ℝ := (if i = j then 1 else 0)
 
@@ -94,10 +98,8 @@ lemma momentumSqr_commutation_momentum {d : ℕ} (i : Fin d) : 𝐩² ∘L 𝐩[
   rw [sub_eq_zero]
   congr
   ext j ψ x
-  rw [ContinuousLinearMap.comp_assoc]
-  rw [momentum_momentum_eq]
-  rw [← ContinuousLinearMap.comp_assoc]
-  rw [momentum_momentum_eq]
+  rw [ContinuousLinearMap.comp_assoc, momentum_momentum_eq]
+  rw [← ContinuousLinearMap.comp_assoc, momentum_momentum_eq]
   rfl
 
 /-
@@ -167,40 +169,92 @@ lemma position_commutation_momentumSqr {d : ℕ} (i : Fin d) : ⁅𝐱[i], 𝐩�
 ## Angular momentum / position commutators
 -/
 
-@[sorryful]
 lemma angularMomentum_commutation_position {d : ℕ} (i j k : Fin d) : ⁅𝐋[i,j], 𝐱[k]⁆ =
-    (Complex.I * ℏ) • ((if i = k then 1 else 0) * 𝐱[j] - (if j = k then 1 else 0) * 𝐱[i]) := by
-  sorry
-
-@[sorryful]
-lemma angularMomentumSqr_commutation_position {d : ℕ} (i : Fin d) :
-    𝐋² ∘L 𝐱[i] - 𝐱[i] ∘L 𝐋² = 0 := by
-  sorry
+    (Complex.I * ℏ * δ[i,k]) • 𝐱[j] - (Complex.I * ℏ * δ[j,k]) • 𝐱[i] := by
+  unfold angularMomentumOperator
+  rw [sub_lie]
+  rw [commutator_leibniz_left, commutator_leibniz_left]
+  rw [position_commutation_position, position_commutation_position]
+  rw [← lie_skew, position_commutation_momentum]
+  rw [← lie_skew, position_commutation_momentum]
+  ext ψ x
+  simp only [kroneckerDelta_symm, comp_neg, comp_smulₛₗ, RingHom.id_apply, comp_id, zero_comp,
+    add_zero, sub_neg_eq_add, ContinuousLinearMap.add_apply, ContinuousLinearMap.neg_apply,
+    coe_smul', Pi.smul_apply, SchwartzMap.add_apply, SchwartzMap.neg_apply, SchwartzMap.smul_apply,
+    smul_eq_mul, coe_sub', Pi.sub_apply, SchwartzMap.sub_apply]
+  ring
 
 /-
 ## Angular momentum / momentum commutators
 -/
 
-@[sorryful]
 lemma angularMomentum_commutation_momentum {d : ℕ} (i j k : Fin d) : ⁅𝐋[i,j], 𝐩[k]⁆ =
-    (Complex.I * ℏ) • ((if i = k then 1 else 0) * 𝐩[j] - (if j = k then 1 else 0) * 𝐩[i]) := by
+    (Complex.I * ℏ * δ[i,k]) • 𝐩[j] - (Complex.I * ℏ * δ[j,k]) • 𝐩[i] := by
+  unfold angularMomentumOperator
+  rw [sub_lie]
+  rw [commutator_leibniz_left, commutator_leibniz_left]
+  rw [momentum_commutation_momentum, momentum_commutation_momentum]
+  rw [position_commutation_momentum, position_commutation_momentum]
+  ext ψ x
+  simp only [comp_zero, smul_comp, id_comp, zero_add, coe_sub', coe_smul', Pi.sub_apply,
+    Pi.smul_apply, SchwartzMap.sub_apply, SchwartzMap.smul_apply, smul_eq_mul]
+
+@[sorryful]
+lemma angularMomentum_commutation_momentumSqr {d : ℕ} (i j : Fin d) :
+    ⁅𝐋[i,j], momentumOperatorSqr (d := d)⁆ = 0 := by
+  unfold momentumOperatorSqr
+  rw [lie_sum]
+  conv_lhs =>
+    enter [2, k]
+    rw [commutator_leibniz_right]
+    rw [angularMomentum_commutation_momentum]
+    simp only [comp_sub, comp_smulₛₗ, RingHom.id_apply, sub_comp, smul_comp]
+    rw [momentum_momentum_eq k _, momentum_momentum_eq k _]
+
+  ext ψ x
+  simp only [coe_sum', Finset.sum_apply, ContinuousLinearMap.add_apply, coe_sub', coe_smul',
+    coe_comp', Pi.sub_apply, Pi.smul_apply, Function.comp_apply, ContinuousLinearMap.zero_apply,
+    SchwartzMap.zero_apply]
+
   sorry
 
 /-
 ## Angular momentum / angular momentum commutators
 -/
 
-@[sorryful]
 lemma angularMomentum_commutation_angularMomentum {d : ℕ} (i j k l : Fin d) : ⁅𝐋[i,j], 𝐋[k,l]⁆ =
-    (Complex.I * ℏ) • ((if i = k then 1 else 0) * 𝐋[j,l]
-                      - (if i = l then 1 else 0) * 𝐋[j,k]
-                      - (if j = k then 1 else 0) * 𝐋[i,l]
-                      + (if j = l then 1 else 0) * 𝐋[i,k]) := by
-  sorry
+    (Complex.I * ℏ * δ[i,k]) • 𝐋[j,l] - (Complex.I * ℏ * δ[i,l]) • 𝐋[j,k]
+    - (Complex.I * ℏ * δ[j,k]) • 𝐋[i,l] + (Complex.I * ℏ * δ[j,l]) • 𝐋[i,k] := by
+  nth_rw 2 [angularMomentumOperator]
+  rw [lie_sub]
+  rw [commutator_leibniz_right, commutator_leibniz_right]
+  rw [angularMomentum_commutation_momentum, angularMomentum_commutation_position]
+  rw [angularMomentum_commutation_momentum, angularMomentum_commutation_position]
+  unfold angularMomentumOperator
+  ext ψ x
+  simp only [comp_sub, comp_smulₛₗ, RingHom.id_apply, sub_comp, smul_comp, coe_sub', Pi.sub_apply,
+    ContinuousLinearMap.add_apply, coe_smul', coe_comp', Pi.smul_apply, Function.comp_apply,
+    SchwartzMap.sub_apply, SchwartzMap.add_apply, SchwartzMap.smul_apply, smul_eq_mul]
+  ring
 
 @[sorryful]
 lemma angularMomentumSqr_commutation_angularMomentum {d : ℕ} (i j : Fin d) :
-    𝐋² ∘L 𝐋[i,j] - 𝐋[i,j] ∘L 𝐋² = 0 := by
+    ⁅angularMomentumOperatorSqr (d := d), 𝐋[i,j]⁆ = 0 := by
+  unfold angularMomentumOperatorSqr
+  rw [sum_lie]
+  conv_lhs =>
+    enter [2, k]
+    rw [sum_lie]
+    enter [2, l]
+    simp only [smul_lie]
+    rw [commutator_leibniz_left]
+    rw [angularMomentum_commutation_angularMomentum]
+  ext ψ x
+  simp only [comp_add, comp_sub, comp_smulₛₗ, RingHom.id_apply, add_comp, sub_comp, smul_comp,
+    smul_add, coe_sum', Finset.sum_apply, ContinuousLinearMap.add_apply, coe_smul', coe_sub',
+    coe_comp', Pi.smul_apply, Pi.sub_apply, Function.comp_apply, ContinuousLinearMap.zero_apply,
+    SchwartzMap.zero_apply]
+
   sorry
 
 end
