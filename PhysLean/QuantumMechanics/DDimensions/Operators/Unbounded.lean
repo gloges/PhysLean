@@ -66,7 +66,7 @@ def ofSymmetric (f : E →ₗ[ℂ] E) (hf : f.IsSymmetric) : UnboundedOperator H
 
 @[simp]
 lemma ofSymmetric_apply {f : E →ₗ[ℂ] E} {hf : f.IsSymmetric} (ψ : E) :
-  (ofSymmetric (hE := hE) f hf).toLinearPMap ψ = E.subtypeL (f ψ) := rfl
+    (ofSymmetric (hE := hE) f hf).toLinearPMap ψ = E.subtypeL (f ψ) := rfl
 
 /-!
 ## Closure
@@ -80,6 +80,7 @@ def closure : UnboundedOperator HS where
 
 lemma closure_toLinearPMap : U.closure.toLinearPMap = U.toLinearPMap.closure := rfl
 
+/-- An unbounded operator is closed iff the graph of its defining LinearPMap is closed. -/
 def IsClosed : Prop := U.toLinearPMap.IsClosed
 
 lemma closure_isClosed : U.closure.IsClosed := IsClosable.closure_isClosed U.is_closable
@@ -114,6 +115,7 @@ lemma isSelfAdjoint_iff : IsSelfAdjoint U ↔ IsSelfAdjoint U.toLinearPMap := by
 
 lemma adjoint_isClosed : (U†).IsClosed := LinearPMap.adjoint_isClosed U.dense_domain
 
+/-- The submodule of `WithLp 2 (HS × HS)` defined by `F`. -/
 def submoduleToLp : Submodule ℂ (WithLp 2 (HS × HS)) where
   carrier := {x | x.ofLp ∈ F}
   add_mem' := by
@@ -124,16 +126,15 @@ def submoduleToLp : Submodule ℂ (WithLp 2 (HS × HS)) where
     intro c x hx
     exact Submodule.smul_mem F c hx
 
-lemma submoduleToLp_closure :
-    (submoduleToLp F.closure) = (submoduleToLp F).topologicalClosure := by
+lemma submoduleToLp_closure : (submoduleToLp F.closure) = (submoduleToLp F).topologicalClosure := by
   rw [Submodule.ext_iff]
   simp [← Submodule.mem_closure_iff] -- Is this needed?
   intro x
   -- TODO: `toLp F.closure = (toLp F).closure`
   -- This is nontrivial:
   -- In `submoduleToLp F.closure` the closure is wrt the sup norm (by default `H × H` is equipped
-  --   with a norm defined as the supremum of the norms of their components).
-  -- In `(submoduleToLp F).closure` the closure is wrt the L² norm introduced above.
+  -- with a norm defined as the supremum of the norms of their components).
+  -- In `(submoduleToLp F).closure` the closure is wrt the L² norm introduced by `WithLp 2`.
   -- Need to use that `Lp` norms induce the same topology in two dimensions (two copies of `H`).
   sorry
 

@@ -135,13 +135,13 @@ lemma mem_iff {f : Space d → ℂ} (hf : AEStronglyMeasurable f volume) :
   simp [h2, HasFiniteIntegral]
 
 lemma mk_add {f g : Space d → ℂ} {hf : MemHS f} {hg : MemHS g} :
-  mk (memHS_add hf hg) = mk hf + mk hg := rfl
+    mk (memHS_add hf hg) = mk hf + mk hg := rfl
 
 lemma mk_const_smul {f : Space d → ℂ} {c : ℂ} {hf : MemHS f} :
-  mk (memHS_const_smul (c := c) hf) = c • mk hf := rfl
+    mk (memHS_const_smul (c := c) hf) = c • mk hf := rfl
 
 lemma mk_eq_iff {f g : Space d → ℂ} {hf : MemHS f} {hg : MemHS g} :
-  mk hf = mk hg ↔ f =ᵐ[volume] g := by simp [mk]
+    mk hf = mk hg ↔ f =ᵐ[volume] g := by simp [mk]
 
 lemma ext_iff {f g : SpaceDHilbertSpace d} :
     f = g ↔ (f : Space d → ℂ) =ᵐ[volume] (g : Space d → ℂ) := Lp.ext_iff

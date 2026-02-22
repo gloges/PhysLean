@@ -23,8 +23,8 @@ open SchwartzMap
 /-- The continuous linear map including Schwartz functions into `SpaceDHilbertSpace d`. -/
 def schwartzIncl {d : ℕ} : 𝓢(Space d, ℂ) →L[ℂ] SpaceDHilbertSpace d := toLpCLM ℂ (E := Space d) ℂ 2
 
-lemma schwartzIncl_injective {d : ℕ} :
-  Function.Injective (schwartzIncl (d := d)) := injective_toLp (E := Space d) 2
+lemma schwartzIncl_injective {d : ℕ} : Function.Injective (schwartzIncl (d := d)) :=
+  injective_toLp (E := Space d) 2
 
 lemma schwartzIncl_coe_ae {d : ℕ} (f : 𝓢(Space d, ℂ)) : f.1 =ᵐ[volume] (schwartzIncl f) :=
   (coeFn_toLp f 2).symm
