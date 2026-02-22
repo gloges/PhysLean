@@ -63,10 +63,9 @@ def ofSymmetric (f : E →ₗ[ℂ] E) (hf : f.IsSymmetric) : UnboundedOperator H
   toLinearPMap := LinearPMap.mk E (E.subtype ∘ₗ f)
   dense_domain := hE
   is_closable := by
-    -- TODO: symmetric ∧ dense ⇒ closable
-    unfold Dense at hE
-    unfold LinearMap.IsSymmetric at hf
-    sorry
+    refine isClosable_iff_exists_closed_extension.mpr ?_
+    use (LinearPMap.mk E (E.subtype ∘ₗ f))†
+    exact ⟨adjoint_isClosed hE, IsFormalAdjoint.le_adjoint hE hf⟩
 
 @[simp]
 lemma ofSymmetric_apply {f : E →ₗ[ℂ] E} {hf : f.IsSymmetric} (ψ : E) :
