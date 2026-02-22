@@ -17,33 +17,35 @@ noncomputable section
 
 open LinearPMap
 
--- Nothing here uses any specific properties of this particular Hilbert space
-abbrev hilbSp d := SpaceDHilbertSpace d
-
 /-- An `UnboundedOperator` is a linear map from a submodule of the Hilbert space
   to the Hilbert space, assumed to be both densely defined and closable. -/
 @[ext]
-structure UnboundedOperator (d : ℕ) where
+structure UnboundedOperator
+    (HS : Type) [NormedAddCommGroup HS] [InnerProductSpace ℂ HS] [CompleteSpace HS] where
   /-- The LinearPMap defining the unbounded operator. -/
-  toLinearPMap : LinearPMap ℂ (hilbSp d) (hilbSp d)
+  toLinearPMap : LinearPMap ℂ HS HS
   /-- The domain of the unbounded operator is dense in the Hilbert space. -/
-  dense_domain : Dense (toLinearPMap.domain : Set (hilbSp d))
+  dense_domain : Dense (toLinearPMap.domain : Set HS)
   /-- The unbounded operator is closable. -/
   is_closable : toLinearPMap.IsClosable
 
 namespace UnboundedOperator
 
-variable {d : ℕ} (U : UnboundedOperator d)
+variable
+  {HS : Type} [NormedAddCommGroup HS] [InnerProductSpace ℂ HS] [CompleteSpace HS]
+  (U : UnboundedOperator HS)
+  {E : Submodule ℂ HS} {hE : Dense (E : Set HS)}
+  (F : Submodule ℂ (HS × HS))
 
 /-- Domain of `UnboundedOperator`. -/
-def domain : Submodule ℂ (hilbSp d) := U.toLinearPMap.domain
+def domain : Submodule ℂ HS := U.toLinearPMap.domain
 
 /-- `UnboundedOperator` as a function. -/
 @[coe]
-def toFun : U.domain → (hilbSp d) := U.toLinearPMap.toFun
+def toFun : U.domain → HS := U.toLinearPMap.toFun
 
-instance : CoeFun (UnboundedOperator d)
-  (fun U : UnboundedOperator d ↦ U.domain → (hilbSp d)) := ⟨toFun⟩
+instance : CoeFun (UnboundedOperator HS)
+  (fun U : UnboundedOperator HS ↦ U.domain → HS) := ⟨toFun⟩
 
 @[simp]
 lemma toFun_eq_coe (x : U.domain) : U.toFun x = U.toLinearPMap.toFun x := rfl
@@ -52,12 +54,8 @@ lemma toFun_eq_coe (x : U.domain) : U.toFun x = U.toLinearPMap.toFun x := rfl
 ## Construction of unbounded operators
 -/
 
-variable
-  {E : Submodule ℂ (hilbSp d)}
-  {hE : Dense (E : Set (hilbSp d))}
-
 /-- An `UnboundedOperator` constructed from a symmetric linear map on a dense submodule `E`. -/
-def ofSymmetric (f : E →ₗ[ℂ] E) (hf : f.IsSymmetric) : UnboundedOperator d where
+def ofSymmetric (f : E →ₗ[ℂ] E) (hf : f.IsSymmetric) : UnboundedOperator HS where
   toLinearPMap := LinearPMap.mk E (E.subtype ∘ₗ f)
   dense_domain := hE
   is_closable := by
@@ -75,11 +73,9 @@ lemma ofSymmetric_apply {f : E →ₗ[ℂ] E} {hf : f.IsSymmetric} (ψ : E) :
 -/
 
 /-- The closure of an unbounded operator. -/
-def closure : UnboundedOperator d where
+def closure : UnboundedOperator HS where
   toLinearPMap := U.toLinearPMap.closure
-  dense_domain := by
-    refine Dense.mono ?_ U.dense_domain
-    exact HasCore.le_domain (closureHasCore U.toLinearPMap)
+  dense_domain := Dense.mono (HasCore.le_domain (closureHasCore U.toLinearPMap)) U.dense_domain
   is_closable := IsClosed.isClosable (IsClosable.closure_isClosed U.is_closable)
 
 lemma closure_toLinearPMap : U.closure.toLinearPMap = U.toLinearPMap.closure := rfl
@@ -93,15 +89,17 @@ lemma closure_isClosed : U.closure.IsClosed := IsClosable.closure_isClosed U.is_
 -/
 
 /-- The adjoint of an unbounded operator, denoted as `U†`. -/
-def adjoint : UnboundedOperator d where
+def adjoint : UnboundedOperator HS where
   toLinearPMap := U.toLinearPMap.adjoint
-  dense_domain := by sorry
+  dense_domain := by
+    -- TODO: `U` is closable ⇒ `U†` is densely defined
+    sorry
   is_closable := IsClosed.isClosable (adjoint_isClosed U.dense_domain)
 
 @[inherit_doc]
 scoped postfix:1024 "†" => UnboundedOperator.adjoint
 
-instance instStar : Star (UnboundedOperator d) where
+instance instStar : Star (UnboundedOperator HS) where
   star := fun U ↦ U.adjoint
 
 lemma adjoint_toLinearPMap : U†.toLinearPMap = U.toLinearPMap† := rfl
@@ -116,46 +114,42 @@ lemma isSelfAdjoint_iff : IsSelfAdjoint U ↔ IsSelfAdjoint U.toLinearPMap := by
 
 lemma adjoint_isClosed : (U†).IsClosed := LinearPMap.adjoint_isClosed U.dense_domain
 
-/-- `hilbSp × hilbSp` with inner product `⟪(f0, f1), (g0, g1)⟫ ≔ ⟪f0, g0⟫ + ⟪f1, g1⟫`
-  and induced norm `‖(f0, f1)‖² = ‖f0‖² + ‖f1‖²` (by default `H × H` is given the norm
-  `‖(f0, f1)‖ = max { ‖f0‖, ‖f1‖ }`) -/
-abbrev hilbSp2 (d : ℕ) := WithLp 2 (hilbSp d × hilbSp d)
-
-def submoduleToLp (E : Submodule ℂ (hilbSp d × hilbSp d)) : Submodule ℂ (hilbSp2 d) where
-  carrier := {x | x.ofLp ∈ E}
+def submoduleToLp : Submodule ℂ (WithLp 2 (HS × HS)) where
+  carrier := {x | x.ofLp ∈ F}
   add_mem' := by
     intro a b ha hb
-    exact Submodule.add_mem E ha hb
-  zero_mem' := Submodule.zero_mem E
+    exact Submodule.add_mem F ha hb
+  zero_mem' := Submodule.zero_mem F
   smul_mem' := by
     intro c x hx
-    exact Submodule.smul_mem E c hx
+    exact Submodule.smul_mem F c hx
 
-lemma submoduleToLp_closure (E : Submodule ℂ (hilbSp d × hilbSp d)) :
-    (submoduleToLp E.closure) = (submoduleToLp E).topologicalClosure := by
+lemma submoduleToLp_closure :
+    (submoduleToLp F.closure) = (submoduleToLp F).topologicalClosure := by
   rw [Submodule.ext_iff]
   simp [← Submodule.mem_closure_iff] -- Is this needed?
   intro x
-  -- TODO: `toLp E.closure = (toLp E).closure`
+  -- TODO: `toLp F.closure = (toLp F).closure`
   -- This is nontrivial:
-  -- In `submoduleToLp E.closure` the closure is wrt the sup norm (by default `H × H` is equipped
+  -- In `submoduleToLp F.closure` the closure is wrt the sup norm (by default `H × H` is equipped
   --   with a norm defined as the supremum of the norms of their components).
-  -- In `(submoduleToLp E).closure` the closure is wrt the L² norm introduced above.
+  -- In `(submoduleToLp F).closure` the closure is wrt the L² norm introduced above.
   -- Need to use that `Lp` norms induce the same topology in two dimensions (two copies of `H`).
   sorry
 
-lemma mem_submodule_iff_mem_submoduleToLp (E : Submodule ℂ (hilbSp d × hilbSp d)) :
-    ∀ f, f ∈ E ↔ (WithLp.toLp 2 f) ∈ submoduleToLp E := fun _ => Eq.to_iff rfl
+omit [CompleteSpace HS] in
+lemma mem_submodule_iff_mem_submoduleToLp :
+    ∀ f, f ∈ F ↔ (WithLp.toLp 2 f) ∈ submoduleToLp F := fun _ => Eq.to_iff rfl
 
-lemma mem_submodule_closure_iff_mem_submoduleToLp_closure (E : Submodule ℂ (hilbSp d × hilbSp d)) :
-    ∀ f, f ∈ E.topologicalClosure ↔ (WithLp.toLp 2 f) ∈ (submoduleToLp E).topologicalClosure := by
+lemma mem_submodule_closure_iff_mem_submoduleToLp_closure :
+    ∀ f, f ∈ F.topologicalClosure ↔ (WithLp.toLp 2 f) ∈ (submoduleToLp F).topologicalClosure := by
   intro f
   rw [← submoduleToLp_closure]
   rfl
 
-lemma mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal
-    (E : Submodule ℂ (hilbSp d × hilbSp d)) :
-    ∀ f, f ∈ E.adjoint ↔ WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp E)ᗮ := by
+omit [CompleteSpace HS] in
+lemma mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal :
+    ∀ f, f ∈ F.adjoint ↔ WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp F)ᗮ := by
   intro f
   constructor <;> intro h
   · rw [Submodule.mem_orthogonal]
@@ -168,19 +162,18 @@ lemma mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal
   · rw [Submodule.mem_adjoint_iff]
     intro a b hab
     rw [Submodule.mem_orthogonal] at h
-    have hab' : (WithLp.toLp 2 (a, b)) ∈ submoduleToLp E := by
-      exact (mem_submodule_iff_mem_submoduleToLp E (a, b)).mp hab
+    have hab' := (mem_submodule_iff_mem_submoduleToLp F (a, b)).mp hab
     have h' : inner ℂ a f.2 = inner ℂ b f.1 := by
       rw [← sub_eq_zero, sub_eq_add_neg, ← inner_neg_right]
       exact h (WithLp.toLp 2 (a, b)) hab'
     simp [h']
 
-lemma mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal
-    (E: Submodule ℂ (hilbSp d × hilbSp d)):
-    ∀ f, f ∈ E.adjoint.adjoint ↔ WithLp.toLp 2 f ∈ (submoduleToLp E)ᗮᗮ := by
+omit [CompleteSpace HS] in
+lemma mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal :
+    ∀ f, f ∈ F.adjoint.adjoint ↔ WithLp.toLp 2 f ∈ (submoduleToLp F)ᗮᗮ := by
   intro f
   simp only [Submodule.mem_adjoint_iff]
-  trans ∀ v, (∀ w ∈ submoduleToLp E, inner ℂ w v = 0) → inner ℂ v (WithLp.toLp 2 f) = 0
+  trans ∀ v, (∀ w ∈ submoduleToLp F, inner ℂ w v = 0) → inner ℂ v (WithLp.toLp 2 f) = 0
   · constructor <;> intro h
     · intro v hw
       have h' := h (-v.snd) v.fst
@@ -188,7 +181,7 @@ lemma mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal
       apply h'
       intro a b hab
       rw [inner_neg_right, neg_sub_left, neg_eq_zero]
-      exact hw (WithLp.toLp 2 (a, b)) ((mem_submodule_iff_mem_submoduleToLp E (a, b)).mp hab)
+      exact hw (WithLp.toLp 2 (a, b)) ((mem_submodule_iff_mem_submoduleToLp F (a, b)).mp hab)
     · intro a b h'
       rw [sub_eq_add_neg, ← inner_neg_left]
       apply h (WithLp.toLp 2 (b, -a))
@@ -198,12 +191,11 @@ lemma mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal
       simp [hw']
   simp only [← Submodule.mem_orthogonal]
 
-lemma mem_submodule_closure_adjoint_iff_mem_submoduleToLp_closure_orthogonal
-    (E : Submodule ℂ (hilbSp d × hilbSp d)) :
-    ∀ f, f ∈ E.closure.adjoint ↔ WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp E).closureᗮ := by
+lemma mem_submodule_closure_adjoint_iff_mem_submoduleToLp_closure_orthogonal :
+    ∀ f, f ∈ F.closure.adjoint ↔ WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp F).closureᗮ := by
   intro f
-  trans (WithLp.toLp 2 (f.2, -f.1)) ∈ (submoduleToLp E.closure)ᗮ
-  · apply mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal E.closure f
+  trans (WithLp.toLp 2 (f.2, -f.1)) ∈ (submoduleToLp F.closure)ᗮ
+  · apply mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal F.closure f
   rw [submoduleToLp_closure]
   simp [← ClosedSubmodule.mem_toSubmodule_iff]
 
@@ -256,6 +248,5 @@ lemma isGeneralizedEigenvector_ofSymmetric_iff
     exact ⟨by simp, h ψ⟩
 
 end UnboundedOperator
-
 end
 end QuantumMechanics
