@@ -116,14 +116,96 @@ lemma isSelfAdjoint_iff : IsSelfAdjoint U ↔ IsSelfAdjoint U.toLinearPMap := by
 
 lemma adjoint_isClosed : (U†).IsClosed := LinearPMap.adjoint_isClosed U.dense_domain
 
-/-
-TODO: Rework below using `PiLp 2` (see [https://leanprover-community.github.io/mathlib4_docs/Mathlib/Analysis/InnerProductSpace/PiL2.html])
-so that `hilbSp × hilbSp` has the structure of an inner product space.
--/
+/-- `hilbSp × hilbSp` with inner product `⟪(f0, f1), (g0, g1)⟫ ≔ ⟪f0, g0⟫ + ⟪f1, g1⟫`
+  and induced norm `‖(f0, f1)‖² = ‖f0‖² + ‖f1‖²` (by default `H × H` is given the norm
+  `‖(f0, f1)‖ = max { ‖f0‖, ‖f1‖ }`) -/
+abbrev hilbSp2 (d : ℕ) := WithLp 2 (hilbSp d × hilbSp d)
 
-abbrev hilbSp2 (d : ℕ) := hilbSp d × hilbSp d
+def submoduleToLp (E : Submodule ℂ (hilbSp d × hilbSp d)) : Submodule ℂ (hilbSp2 d) where
+  carrier := {x | x.ofLp ∈ E}
+  add_mem' := by
+    intro a b ha hb
+    exact Submodule.add_mem E ha hb
+  zero_mem' := Submodule.zero_mem E
+  smul_mem' := by
+    intro c x hx
+    exact Submodule.smul_mem E c hx
 
-def inner2 (f g : hilbSp2 d) : ℂ := inner ℂ f.1 g.1 + inner ℂ f.2 g.2
+lemma submoduleToLp_closure (E : Submodule ℂ (hilbSp d × hilbSp d)) :
+    (submoduleToLp E.closure) = (submoduleToLp E).topologicalClosure := by
+  rw [Submodule.ext_iff]
+  simp [← Submodule.mem_closure_iff] -- Is this needed?
+  intro x
+  -- TODO: `toLp E.closure = (toLp E).closure`
+  -- This is nontrivial:
+  -- In `submoduleToLp E.closure` the closure is wrt the sup norm (by default `H × H` is equipped
+  --   with a norm defined as the supremum of the norms of their components).
+  -- In `(submoduleToLp E).closure` the closure is wrt the L² norm introduced above.
+  -- Need to use that `Lp` norms induce the same topology in two dimensions (two copies of `H`).
+  sorry
+
+lemma mem_submodule_iff_mem_submoduleToLp (E : Submodule ℂ (hilbSp d × hilbSp d)) :
+    ∀ f, f ∈ E ↔ (WithLp.toLp 2 f) ∈ submoduleToLp E := fun _ => Eq.to_iff rfl
+
+lemma mem_submodule_closure_iff_mem_submoduleToLp_closure (E : Submodule ℂ (hilbSp d × hilbSp d)) :
+    ∀ f, f ∈ E.topologicalClosure ↔ (WithLp.toLp 2 f) ∈ (submoduleToLp E).topologicalClosure := by
+  intro f
+  rw [← submoduleToLp_closure]
+  rfl
+
+lemma mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal
+    (E : Submodule ℂ (hilbSp d × hilbSp d)) :
+    ∀ f, f ∈ E.adjoint ↔ WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp E)ᗮ := by
+  intro f
+  constructor <;> intro h
+  · rw [Submodule.mem_orthogonal]
+    intro u hu
+    rw [Submodule.mem_adjoint_iff] at h
+    have h' : inner ℂ u.snd f.1 = inner ℂ u.fst f.2 := by
+      rw [← sub_eq_zero]
+      exact h u.fst u.snd hu
+    simp [h']
+  · rw [Submodule.mem_adjoint_iff]
+    intro a b hab
+    rw [Submodule.mem_orthogonal] at h
+    have hab' : (WithLp.toLp 2 (a, b)) ∈ submoduleToLp E := by
+      exact (mem_submodule_iff_mem_submoduleToLp E (a, b)).mp hab
+    have h' : inner ℂ a f.2 = inner ℂ b f.1 := by
+      rw [← sub_eq_zero, sub_eq_add_neg, ← inner_neg_right]
+      exact h (WithLp.toLp 2 (a, b)) hab'
+    simp [h']
+
+lemma mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal
+    (E: Submodule ℂ (hilbSp d × hilbSp d)):
+    ∀ f, f ∈ E.adjoint.adjoint ↔ WithLp.toLp 2 f ∈ (submoduleToLp E)ᗮᗮ := by
+  intro f
+  simp only [Submodule.mem_adjoint_iff]
+  trans ∀ v, (∀ w ∈ submoduleToLp E, inner ℂ w v = 0) → inner ℂ v (WithLp.toLp 2 f) = 0
+  · constructor <;> intro h
+    · intro v hw
+      have h' := h (-v.snd) v.fst
+      rw [inner_neg_left, sub_neg_eq_add] at h'
+      apply h'
+      intro a b hab
+      rw [inner_neg_right, neg_sub_left, neg_eq_zero]
+      exact hw (WithLp.toLp 2 (a, b)) ((mem_submodule_iff_mem_submoduleToLp E (a, b)).mp hab)
+    · intro a b h'
+      rw [sub_eq_add_neg, ← inner_neg_left]
+      apply h (WithLp.toLp 2 (b, -a))
+      intro w hw
+      have hw' := h' w.fst w.snd hw
+      rw [sub_eq_zero] at hw'
+      simp [hw']
+  simp only [← Submodule.mem_orthogonal]
+
+lemma mem_submodule_closure_adjoint_iff_mem_submoduleToLp_closure_orthogonal
+    (E : Submodule ℂ (hilbSp d × hilbSp d)) :
+    ∀ f, f ∈ E.closure.adjoint ↔ WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp E).closureᗮ := by
+  intro f
+  trans (WithLp.toLp 2 (f.2, -f.1)) ∈ (submoduleToLp E.closure)ᗮ
+  · apply mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal E.closure f
+  rw [submoduleToLp_closure]
+  simp [← ClosedSubmodule.mem_toSubmodule_iff]
 
 lemma closure_adjoint_eq_adjoint : U.closure† = U† := by
   -- Reduce to statement about graphs using density and closability assumptions
@@ -133,9 +215,11 @@ lemma closure_adjoint_eq_adjoint : U.closure† = U† := by
   rw [adjoint_toLinearPMap, adjoint_graph_eq_graph_adjoint U.dense_domain]
   rw [closure_toLinearPMap, ← IsClosable.graph_closure_eq_closure_graph U.is_closable]
 
-  -- Remains to show `(graph.closure)^⟂ = graph^⟂`, which is exactly `Submodule.orthogonal_closure`.
-  -- Need to "translate" to orthogonal complements and use inner product structure on `hilbSp2`.
-  sorry
+  ext f
+  trans WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp U.toLinearPMap.graph).topologicalClosureᗮ
+  · exact mem_submodule_closure_adjoint_iff_mem_submoduleToLp_closure_orthogonal _ _
+  rw [Submodule.orthogonal_closure]
+  exact Iff.symm (mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal _ _)
 
 lemma adjoint_adjoint_eq_closure : U†† = U.closure := by
   -- Reduce to statement about graphs using density and closability assumptions
@@ -145,41 +229,11 @@ lemma adjoint_adjoint_eq_closure : U†† = U.closure := by
   rw [adjoint_toLinearPMap, adjoint_graph_eq_graph_adjoint U.dense_domain]
   rw [closure_toLinearPMap, ← IsClosable.graph_closure_eq_closure_graph U.is_closable]
 
-  ext ψUψ
-  simp only [Submodule.mem_adjoint_iff]
-
-  -- Flip the sign of either `a` or `b` (which are general elements of `hilbSp` anyways)
-  -- and package conditions into statements of orthogonality in `hilbSp × hilbSp`
-  trans ∀ (f : hilbSp2 d), (∀ g ∈ U.toLinearPMap.graph, inner2 f g = 0) → inner2 f ψUψ = 0
-  · constructor <;> intro h
-    · intro f h1
-      have h2 := h (-f.2) f.1
-      simp only [inner_neg_left, sub_neg_eq_add] at h2
-      apply h2
-      intro a b hab
-      rw [sub_eq_zero]
-      nth_rw 1 [← InnerProductSpace.conj_inner_symm]
-      nth_rw 2 [← InnerProductSpace.conj_inner_symm]
-      apply RingHom.congr_arg
-      rw [inner_neg_left, neg_eq_iff_add_eq_zero, add_comm]
-      exact h1 (a, b) hab
-    · intro a b h1
-      rw [sub_eq_add_neg, ← inner_neg_left]
-      apply h (b, -a)
-      intro g hg
-      unfold inner2
-      rw [inner_neg_left, add_neg_eq_zero]
-      nth_rw 1 [← InnerProductSpace.conj_inner_symm]
-      nth_rw 2 [← InnerProductSpace.conj_inner_symm]
-      apply RingHom.congr_arg
-      apply Eq.symm
-      rw [← sub_eq_zero]
-      exact h1 g.1 g.2 hg
-
-  -- Remains to show that `(graph^⟂)^⟂ = graph.topologicalClosure`,
-  -- which is exactly `Submodule.orthogonal_orthogonal_eq_closure`.
-  -- Need to "translate" to orthogonal complements and use inner product structure on `hilbSp2`.
-  sorry
+  ext f
+  trans WithLp.toLp 2 f ∈ (submoduleToLp U.toLinearPMap.graph)ᗮᗮ
+  · exact mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal _ _
+  rw [Submodule.orthogonal_orthogonal_eq_closure]
+  rw [mem_submodule_closure_iff_mem_submoduleToLp_closure]
 
 /-!
 ## Generalized eigenvectors
