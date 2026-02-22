@@ -19,7 +19,7 @@ namespace QuantumMechanics
 
 noncomputable section
 
-open LinearPMap
+open LinearPMap Submodule
 
 /-- An `UnboundedOperator` is a linear map from a submodule of the Hilbert space
   to the Hilbert space, assumed to be both densely defined and closable. -/
@@ -103,22 +103,41 @@ def submoduleToLp : Submodule ℂ (WithLp 2 (HS × HS)) where
     intro c x hx
     exact Submodule.smul_mem F c hx
 
-lemma submoduleToLp_closure : (submoduleToLp F.closure) = (submoduleToLp F).topologicalClosure := by
-  rw [Submodule.ext_iff]
-  simp [← Submodule.mem_closure_iff] -- Is this needed?
-  intro x
-  -- TODO: `toLp F.closure = (toLp F).closure`
-  -- This is nontrivial:
-  -- In `submoduleToLp F.closure` the closure is wrt the sup norm (by default `H × H` is equipped
-  -- with a norm defined as the supremum of the norms of their components).
-  -- In `(submoduleToLp F).closure` the closure is wrt the L² norm introduced by `WithLp 2`.
-  -- Need to use that `Lp` norms induce the same topology in two dimensions (two copies of `H`).
-  sorry
-
 omit [CompleteSpace HS] in
 lemma mem_submodule_iff_mem_submoduleToLp :
     ∀ f, f ∈ F ↔ (WithLp.toLp 2 f) ∈ submoduleToLp F := fun _ => Eq.to_iff rfl
 
+omit [CompleteSpace HS] in
+lemma submoduleToLp_closure : (submoduleToLp F.closure) = (submoduleToLp F).topologicalClosure := by
+  rw [Submodule.ext_iff]
+  intro x
+  rw [← mem_submodule_iff_mem_submoduleToLp]
+  change x.ofLp ∈ _root_.closure F ↔ x ∈ _root_.closure (submoduleToLp F)
+  repeat rw [mem_closure_iff_nhds]
+  constructor
+  · intro h t ht
+    apply mem_nhds_iff.mp at ht
+    rcases ht with ⟨t1, ht1, ht1', hx⟩
+    have : ∃ t' ∈ nhds x.ofLp, (∀ y ∈ t', WithLp.toLp 2 y ∈ t1) := by
+      refine Filter.eventually_iff_exists_mem.mp ?_
+      apply ContinuousAt.eventually_mem (by fun_prop) (IsOpen.mem_nhds ht1' hx)
+    rcases this with ⟨t2, ht2, ht2'⟩
+    rcases h t2 ht2 with ⟨w, hw⟩
+    use WithLp.toLp 2 w
+    exact ⟨Set.mem_preimage.mp (ht1 (ht2' w hw.1)),
+      (mem_submodule_iff_mem_submoduleToLp F w).mpr hw.2⟩
+  · intro h t ht
+    apply mem_nhds_iff.mp at ht
+    rcases ht with ⟨t1, ht1, ht1', hx⟩
+    have : ∃ t' ∈ nhds x, (∀ y ∈ t', y.ofLp ∈ t1) := by
+      refine Filter.eventually_iff_exists_mem.mp ?_
+      exact ContinuousAt.eventually_mem (by fun_prop) (IsOpen.mem_nhds ht1' hx)
+    rcases this with ⟨t2, ht2, ht2'⟩
+    rcases h t2 ht2 with ⟨w, hw⟩
+    use w.ofLp
+    exact ⟨Set.mem_preimage.mp (ht1 (ht2' w hw.1)), (mem_toAddSubgroup (submoduleToLp F)).mp hw.2⟩
+
+omit [CompleteSpace HS] in
 lemma mem_submodule_closure_iff_mem_submoduleToLp_closure :
     ∀ f, f ∈ F.topologicalClosure ↔ (WithLp.toLp 2 f) ∈ (submoduleToLp F).topologicalClosure := by
   intro f
@@ -130,16 +149,16 @@ lemma mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal :
     ∀ f, f ∈ F.adjoint ↔ WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp F)ᗮ := by
   intro f
   constructor <;> intro h
-  · rw [Submodule.mem_orthogonal]
+  · rw [mem_orthogonal]
     intro u hu
-    rw [Submodule.mem_adjoint_iff] at h
+    rw [mem_adjoint_iff] at h
     have h' : inner ℂ u.snd f.1 = inner ℂ u.fst f.2 := by
       rw [← sub_eq_zero]
       exact h u.fst u.snd hu
     simp [h']
-  · rw [Submodule.mem_adjoint_iff]
+  · rw [mem_adjoint_iff]
     intro a b hab
-    rw [Submodule.mem_orthogonal] at h
+    rw [mem_orthogonal] at h
     have hab' := (mem_submodule_iff_mem_submoduleToLp F (a, b)).mp hab
     have h' : inner ℂ a f.2 = inner ℂ b f.1 := by
       rw [← sub_eq_zero, sub_eq_add_neg, ← inner_neg_right]
@@ -150,7 +169,7 @@ omit [CompleteSpace HS] in
 lemma mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal :
     ∀ f, f ∈ F.adjoint.adjoint ↔ WithLp.toLp 2 f ∈ (submoduleToLp F)ᗮᗮ := by
   intro f
-  simp only [Submodule.mem_adjoint_iff]
+  simp only [mem_adjoint_iff]
   trans ∀ v, (∀ w ∈ submoduleToLp F, inner ℂ w v = 0) → inner ℂ v (WithLp.toLp 2 f) = 0
   · constructor <;> intro h
     · intro v hw
@@ -167,8 +186,9 @@ lemma mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal 
       have hw' := h' w.fst w.snd hw
       rw [sub_eq_zero] at hw'
       simp [hw']
-  simp only [← Submodule.mem_orthogonal]
+  simp only [← mem_orthogonal]
 
+omit [CompleteSpace HS] in
 lemma mem_submodule_closure_adjoint_iff_mem_submoduleToLp_closure_orthogonal :
     ∀ f, f ∈ F.closure.adjoint ↔ WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp F).closureᗮ := by
   intro f
@@ -186,23 +206,23 @@ def adjoint : UnboundedOperator HS where
   toLinearPMap := U.toLinearPMap.adjoint
   dense_domain := by
     by_contra hd
-    have hx : ∃ x ∈ U.toLinearPMap†.domainᗮ, x ≠ 0 := by
+    have : ∃ x ∈ U.toLinearPMap†.domainᗮ, x ≠ 0 := by
       apply not_forall.mp at hd
       rcases hd with ⟨y, hy⟩
       have hnetop : U.toLinearPMap†.domainᗮᗮ ≠ ⊤ := by
-        rw [Submodule.orthogonal_orthogonal_eq_closure]
+        rw [orthogonal_orthogonal_eq_closure]
         exact Ne.symm (ne_of_mem_of_not_mem' trivial hy)
       have hnebot : U.toLinearPMap†.domainᗮ ≠ ⊥ := by
         by_contra
         apply hnetop
-        rwa [Submodule.orthogonal_eq_top_iff]
-      exact Submodule.exists_mem_ne_zero_of_ne_bot hnebot
-    rcases hx with ⟨x, hx, hx'⟩
+        rwa [orthogonal_eq_top_iff]
+      exact exists_mem_ne_zero_of_ne_bot hnebot
+    rcases this with ⟨x, hx, hx'⟩
     apply hx'
     apply graph_fst_eq_zero_snd U.toLinearPMap.closure _ rfl
     rw [← IsClosable.graph_closure_eq_closure_graph U.is_closable]
     rw [mem_submodule_closure_iff_mem_submoduleToLp_closure]
-    rw [← Submodule.orthogonal_orthogonal_eq_closure]
+    rw [← orthogonal_orthogonal_eq_closure]
     rw [← mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal]
     rw [← LinearPMap.adjoint_graph_eq_graph_adjoint U.dense_domain]
     rw [mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal]
@@ -241,7 +261,7 @@ lemma closure_adjoint_eq_adjoint : U.closure† = U† := by
   ext f
   trans WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp U.toLinearPMap.graph).topologicalClosureᗮ
   · exact mem_submodule_closure_adjoint_iff_mem_submoduleToLp_closure_orthogonal _ _
-  rw [Submodule.orthogonal_closure]
+  rw [orthogonal_closure]
   exact Iff.symm (mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal _ _)
 
 lemma adjoint_adjoint_eq_closure : U†† = U.closure := by
@@ -255,7 +275,7 @@ lemma adjoint_adjoint_eq_closure : U†† = U.closure := by
   ext f
   trans WithLp.toLp 2 f ∈ (submoduleToLp U.toLinearPMap.graph)ᗮᗮ
   · exact mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal _ _
-  rw [Submodule.orthogonal_orthogonal_eq_closure]
+  rw [orthogonal_orthogonal_eq_closure]
   rw [mem_submodule_closure_iff_mem_submoduleToLp_closure]
 
 /-!
