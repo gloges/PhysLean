@@ -9,9 +9,21 @@ import PhysLean.QuantumMechanics.DDimensions.SpaceDHilbertSpace.SchwartzSubmodul
 
 # Unbounded operators
 
+In this file we define
+- `UnboundedOperator`: an unbounded operator with domain a submodule of a generic Hilbert space.
+  All unbounded operators are assumed to be both densely defined and closable.
+- The closure, `UnboundedOperator.closure`, and adjoint, `UnboundedOperator.adjoint`, with notation
+  `U† = U.adjoint`. That `U†` is densely defined is guaranteed by the closability of `U`.
+- The concept of a generalized eigenvector in `IsGeneralizedEigenvector`.
+
+We prove some basic relations, making use of the density and closability assumptions:
+- `U.closure† = U†` in `closure_adjoint_eq_adjoint`
+- `U†† = U.closure` in `adjoint_adjoint_eq_closure`
+
 ## References
 
-- K. Schmüdgen, "Unbounded Self-adjoint Operators on Hilbert Space", Part I.
+- K. Schmüdgen, (2012). "Unbounded self-adjoint operators on Hilbert space" (Vol. 265). Springer.
+  https://doi.org/10.1007/978-94-007-4753-1
 
 -/
 
