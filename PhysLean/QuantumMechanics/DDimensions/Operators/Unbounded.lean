@@ -37,12 +37,11 @@ open LinearPMap Submodule
   to the Hilbert space, assumed to be both densely defined and closable. -/
 @[ext]
 structure UnboundedOperator
-    (HS : Type) [NormedAddCommGroup HS] [InnerProductSpace ℂ HS] [CompleteSpace HS] where
-  /-- The LinearPMap defining the unbounded operator. -/
-  toLinearPMap : LinearPMap ℂ HS HS
-  /-- The domain of the unbounded operator is dense in the Hilbert space. -/
-  dense_domain : Dense (toLinearPMap.domain : Set HS)
-  /-- The unbounded operator is closable. -/
+    (HS : Type) [NormedAddCommGroup HS] [InnerProductSpace ℂ HS] [CompleteSpace HS]
+    extends LinearPMap ℂ HS HS where
+  /-- The domain of an unbounded operator is dense in the Hilbert space. -/
+  dense_domain : Dense (domain : Set HS)
+  /-- An unbounded operator is closable. -/
   is_closable : toLinearPMap.IsClosable
 
 namespace UnboundedOperator
@@ -53,18 +52,26 @@ variable
   {E : Submodule ℂ HS} {hE : Dense (E : Set HS)}
   (F : Submodule ℂ (HS × HS))
 
-/-- Domain of `UnboundedOperator`. -/
-def domain : Submodule ℂ HS := U.toLinearPMap.domain
-
 /-- `UnboundedOperator` as a function. -/
 @[coe]
-def toFun : U.domain → HS := U.toLinearPMap.toFun
+def toFun' : U.domain → HS := U.toLinearPMap.toFun
 
 instance : CoeFun (UnboundedOperator HS)
-  (fun U : UnboundedOperator HS ↦ U.domain → HS) := ⟨toFun⟩
+  (fun U : UnboundedOperator HS ↦ U.domain → HS) := ⟨toFun'⟩
 
 @[simp]
 lemma toFun_eq_coe (x : U.domain) : U.toFun x = U.toLinearPMap.toFun x := rfl
+
+lemma ext' (U T : UnboundedOperator HS) : U.toLinearPMap = T.toLinearPMap → U = T := by
+  intro h
+  apply UnboundedOperator.ext
+  · exact toSubMulAction_inj.mp (congrArg toSubMulAction (congrArg domain h))
+  · exact congr_arg_heq toFun h
+
+lemma ext_iff' (U T : UnboundedOperator HS) : U = T ↔ U.toLinearPMap = T.toLinearPMap := by
+  refine ⟨?_, UnboundedOperator.ext' U T⟩
+  intro h
+  rw [h]
 
 /-!
 ### Construction of unbounded operators
@@ -81,7 +88,7 @@ def ofSymmetric (f : E →ₗ[ℂ] E) (hf : f.IsSymmetric) : UnboundedOperator H
 
 @[simp]
 lemma ofSymmetric_apply {f : E →ₗ[ℂ] E} {hf : f.IsSymmetric} (ψ : E) :
-    (ofSymmetric (hE := hE) f hf).toLinearPMap ψ = E.subtypeL (f ψ) := rfl
+    (ofSymmetric (hE := hE) f hf) ψ = E.subtypeL (f ψ) := rfl
 
 /-!
 ### Closure
@@ -255,16 +262,14 @@ lemma adjoint_toLinearPMap : U†.toLinearPMap = U.toLinearPMap† := rfl
 lemma isSelfAdjoint_def : IsSelfAdjoint U ↔ U† = U := Iff.rfl
 
 lemma isSelfAdjoint_iff : IsSelfAdjoint U ↔ IsSelfAdjoint U.toLinearPMap := by
-  rw [isSelfAdjoint_def, LinearPMap.isSelfAdjoint_def]
-  constructor <;> intro h
-  · rw [← adjoint_toLinearPMap, h]
-  · rwa [UnboundedOperator.ext_iff, adjoint_toLinearPMap]
+  rw [isSelfAdjoint_def, LinearPMap.isSelfAdjoint_def, ← adjoint_toLinearPMap]
+  exact UnboundedOperator.ext_iff' U† U
 
 lemma adjoint_isClosed : (U†).IsClosed := LinearPMap.adjoint_isClosed U.dense_domain
 
 lemma closure_adjoint_eq_adjoint : U.closure† = U† := by
   -- Reduce to statement about graphs using density and closability assumptions
-  apply UnboundedOperator.ext
+  apply UnboundedOperator.ext'
   apply LinearPMap.eq_of_eq_graph
   rw [adjoint_toLinearPMap, adjoint_graph_eq_graph_adjoint U.closure.dense_domain]
   rw [adjoint_toLinearPMap, adjoint_graph_eq_graph_adjoint U.dense_domain]
@@ -278,7 +283,7 @@ lemma closure_adjoint_eq_adjoint : U.closure† = U† := by
 
 lemma adjoint_adjoint_eq_closure : U†† = U.closure := by
   -- Reduce to statement about graphs using density and closability assumptions
-  apply UnboundedOperator.ext
+  apply UnboundedOperator.ext'
   apply LinearPMap.eq_of_eq_graph
   rw [adjoint_toLinearPMap, adjoint_graph_eq_graph_adjoint U†.dense_domain]
   rw [adjoint_toLinearPMap, adjoint_graph_eq_graph_adjoint U.dense_domain]
