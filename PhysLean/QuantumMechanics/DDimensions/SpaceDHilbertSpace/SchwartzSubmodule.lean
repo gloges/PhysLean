@@ -32,11 +32,8 @@ lemma schwartzIncl_coe_ae {d : ℕ} (f : 𝓢(Space d, ℂ)) : f.1 =ᵐ[volume] 
 lemma schwartzIncl_inner {d : ℕ} (f g : 𝓢(Space d, ℂ)) :
     ⟪schwartzIncl f, schwartzIncl g⟫_ℂ = ∫ x : Space d, starRingEnd ℂ (f x) * g x := by
   apply integral_congr_ae
-  have hf := schwartzIncl_coe_ae f
-  have hg := schwartzIncl_coe_ae g
-  filter_upwards [hf, hg] with _ hf hg
-  rw [← hf, ← hg]
-  rw [RCLike.inner_apply, mul_comm]
+  filter_upwards [schwartzIncl_coe_ae f, schwartzIncl_coe_ae g] with _ hf hg
+  rw [← hf, ← hg, RCLike.inner_apply, mul_comm]
   rfl
 
 /-- The submodule of `SpaceDHilbertSpace d` consisting of Schwartz functions. -/

@@ -104,7 +104,7 @@ lemma coe_hilbertSpace_memHS (f : SpaceDHilbertSpace d) : MemHS (f : Space d →
   exact hf ▸ f.2
 
 lemma mk_surjective (f : SpaceDHilbertSpace d) :
-    ∃ (g : Space d → ℂ), ∃ (hg : MemHS g), mk hg = f := by
+    ∃ (g : Space d → ℂ) (hg : MemHS g), mk hg = f := by
   use f, coe_hilbertSpace_memHS f
   simp [mk]
 
@@ -129,14 +129,16 @@ lemma mem_iff {f : Space d → ℂ} (hf : AEStronglyMeasurable f volume) :
   have h2 : AEStronglyMeasurable (fun x ↦ norm (f x) ^ 2) :=
     AEStronglyMeasurable.pow (continuous_norm.comp_aestronglyMeasurable hf) 2
 
-  simp only [h1, true_and, Integrable]
+  simp only [h1]
   simp only [eLpNorm_lt_top_iff_lintegral_rpow_enorm_lt_top (NeZero.ne' 2).symm
     (ENNReal.top_ne_ofNat).symm, ENNReal.toReal_ofNat, ENNReal.rpow_ofNat]
-  simp [h2, HasFiniteIntegral]
+  simp [h2, Integrable, HasFiniteIntegral]
 
+@[simp]
 lemma mk_add {f g : Space d → ℂ} {hf : MemHS f} {hg : MemHS g} :
     mk (memHS_add hf hg) = mk hf + mk hg := rfl
 
+@[simp]
 lemma mk_const_smul {f : Space d → ℂ} {c : ℂ} {hf : MemHS f} :
     mk (memHS_const_smul (c := c) hf) = c • mk hf := rfl
 
