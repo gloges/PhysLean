@@ -107,35 +107,39 @@ section Adjoints
 
 open InnerProductSpaceSubmodule
 
+/-- The adjoint of a densely defined, closable `LinearPMap` is densely defined. -/
+lemma adjoint_isClosable_dense (f : LinearPMap ℂ HS HS) (h_dense : Dense (f.domain : Set HS))
+    (h_closable : f.IsClosable) : Dense (f†.domain : Set HS) := by
+  by_contra hd
+  have : ∃ x ∈ f†.domainᗮ, x ≠ 0 := by
+    apply not_forall.mp at hd
+    rcases hd with ⟨y, hy⟩
+    have hnetop : f†.domainᗮᗮ ≠ ⊤ := by
+      rw [orthogonal_orthogonal_eq_closure]
+      exact Ne.symm (ne_of_mem_of_not_mem' trivial hy)
+    have hnebot : f†.domainᗮ ≠ ⊥ := by
+      by_contra
+      apply hnetop
+      rwa [orthogonal_eq_top_iff]
+    exact exists_mem_ne_zero_of_ne_bot hnebot
+  rcases this with ⟨x, hx, hx'⟩
+  apply hx'
+  apply graph_fst_eq_zero_snd f.closure _ rfl
+  rw [← IsClosable.graph_closure_eq_closure_graph h_closable,
+    mem_submodule_closure_iff_mem_submoduleToLp_closure,
+    ← orthogonal_orthogonal_eq_closure,
+    ← mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal,
+    ← LinearPMap.adjoint_graph_eq_graph_adjoint h_dense,
+    mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal]
+  rintro ⟨y, Uy⟩ hy
+  simp only [neg_zero, WithLp.prod_inner_apply, inner_zero_right, add_zero]
+  apply hx y
+  exact mem_domain_of_mem_graph hy
+
 /-- The adjoint of an unbounded operator, denoted as `U†`. -/
 noncomputable def adjoint : UnboundedOperator HS where
   toLinearPMap := U.toLinearPMap.adjoint
-  dense_domain := by
-    by_contra hd
-    have : ∃ x ∈ U.toLinearPMap†.domainᗮ, x ≠ 0 := by
-      apply not_forall.mp at hd
-      rcases hd with ⟨y, hy⟩
-      have hnetop : U.toLinearPMap†.domainᗮᗮ ≠ ⊤ := by
-        rw [orthogonal_orthogonal_eq_closure]
-        exact Ne.symm (ne_of_mem_of_not_mem' trivial hy)
-      have hnebot : U.toLinearPMap†.domainᗮ ≠ ⊥ := by
-        by_contra
-        apply hnetop
-        rwa [orthogonal_eq_top_iff]
-      exact exists_mem_ne_zero_of_ne_bot hnebot
-    rcases this with ⟨x, hx, hx'⟩
-    apply hx'
-    apply graph_fst_eq_zero_snd U.toLinearPMap.closure _ rfl
-    rw [← IsClosable.graph_closure_eq_closure_graph U.is_closable,
-      mem_submodule_closure_iff_mem_submoduleToLp_closure,
-      ← orthogonal_orthogonal_eq_closure,
-      ← mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal,
-      ← LinearPMap.adjoint_graph_eq_graph_adjoint U.dense_domain,
-      mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal]
-    rintro ⟨y, Uy⟩ hy
-    simp only [neg_zero, WithLp.prod_inner_apply, inner_zero_right, add_zero]
-    apply hx y
-    exact mem_domain_of_mem_graph hy
+  dense_domain := adjoint_isClosable_dense U.toLinearPMap U.dense_domain U.is_closable
   is_closable := IsClosed.isClosable (adjoint_isClosed U.dense_domain)
 
 @[inherit_doc]
