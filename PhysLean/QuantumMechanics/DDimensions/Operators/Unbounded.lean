@@ -29,15 +29,13 @@ We prove some basic relations, making use of the density and closability assumpt
 
 namespace QuantumMechanics
 
-noncomputable section
-
 open LinearPMap Submodule
 
 /-- An `UnboundedOperator` is a linear map from a submodule of the Hilbert space
   to the Hilbert space, assumed to be both densely defined and closable. -/
 @[ext]
 structure UnboundedOperator
-    (HS : Type) [NormedAddCommGroup HS] [InnerProductSpace ℂ HS] [CompleteSpace HS]
+    (HS : Type*) [NormedAddCommGroup HS] [InnerProductSpace ℂ HS] [CompleteSpace HS]
     extends LinearPMap ℂ HS HS where
   /-- The domain of an unbounded operator is dense in the Hilbert space. -/
   dense_domain : Dense (domain : Set HS)
@@ -47,20 +45,10 @@ structure UnboundedOperator
 namespace UnboundedOperator
 
 variable
-  {HS : Type} [NormedAddCommGroup HS] [InnerProductSpace ℂ HS] [CompleteSpace HS]
+  {HS : Type*} [NormedAddCommGroup HS] [InnerProductSpace ℂ HS] [CompleteSpace HS]
   (U : UnboundedOperator HS)
-  {E : Submodule ℂ HS} {hE : Dense (E : Set HS)}
-  (F : Submodule ℂ (HS × HS))
 
-/-- `UnboundedOperator` as a function. -/
-@[coe]
-def toFun' : U.domain → HS := U.toLinearPMap.toFun
-
-instance : CoeFun (UnboundedOperator HS)
-  (fun U : UnboundedOperator HS ↦ U.domain → HS) := ⟨toFun'⟩
-
-lemma ext' (U T : UnboundedOperator HS) : U.toLinearPMap = T.toLinearPMap → U = T := by
-  intro h
+lemma ext' (U T : UnboundedOperator HS) (h : U.toLinearPMap = T.toLinearPMap) : U = T := by
   apply UnboundedOperator.ext
   · exact toSubMulAction_inj.mp (congrArg toSubMulAction (congrArg domain h))
   · exact congr_arg_heq toFun h
@@ -74,6 +62,8 @@ lemma ext_iff' (U T : UnboundedOperator HS) : U = T ↔ U.toLinearPMap = T.toLin
 ### Construction of unbounded operators
 -/
 
+variable {E : Submodule ℂ HS} {hE : Dense (E : Set HS)}
+
 /-- An `UnboundedOperator` constructed from a symmetric linear map on a dense submodule `E`. -/
 def ofSymmetric (f : E →ₗ[ℂ] E) (hf : f.IsSymmetric) : UnboundedOperator HS where
   toLinearPMap := LinearPMap.mk E (E.subtype ∘ₗ f)
@@ -85,18 +75,21 @@ def ofSymmetric (f : E →ₗ[ℂ] E) (hf : f.IsSymmetric) : UnboundedOperator H
 
 @[simp]
 lemma ofSymmetric_apply {f : E →ₗ[ℂ] E} {hf : f.IsSymmetric} (ψ : E) :
-    (ofSymmetric (hE := hE) f hf) ψ = E.subtypeL (f ψ) := rfl
+    (ofSymmetric (hE := hE) f hf).toLinearPMap ψ = E.subtypeL (f ψ) := rfl
 
 /-!
 ### Closure
 -/
 
+section Closure
+
 /-- The closure of an unbounded operator. -/
-def closure : UnboundedOperator HS where
+noncomputable def closure : UnboundedOperator HS where
   toLinearPMap := U.toLinearPMap.closure
   dense_domain := Dense.mono (HasCore.le_domain (closureHasCore U.toLinearPMap)) U.dense_domain
   is_closable := IsClosed.isClosable (IsClosable.closure_isClosed U.is_closable)
 
+@[simp]
 lemma closure_toLinearPMap : U.closure.toLinearPMap = U.toLinearPMap.closure := rfl
 
 /-- An unbounded operator is closed iff the graph of its defining LinearPMap is closed. -/
@@ -104,12 +97,18 @@ def IsClosed : Prop := U.toLinearPMap.IsClosed
 
 lemma closure_isClosed : U.closure.IsClosed := IsClosable.closure_isClosed U.is_closable
 
+end Closure
+
 /-!
 ### Adjoints
 -/
 
+section Adjoints
+
+open InnerProductSpaceSubmodule
+
 /-- The adjoint of an unbounded operator, denoted as `U†`. -/
-def adjoint : UnboundedOperator HS where
+noncomputable def adjoint : UnboundedOperator HS where
   toLinearPMap := U.toLinearPMap.adjoint
   dense_domain := by
     by_contra hd
@@ -127,12 +126,12 @@ def adjoint : UnboundedOperator HS where
     rcases this with ⟨x, hx, hx'⟩
     apply hx'
     apply graph_fst_eq_zero_snd U.toLinearPMap.closure _ rfl
-    rw [← IsClosable.graph_closure_eq_closure_graph U.is_closable]
-    rw [mem_submodule_closure_iff_mem_submoduleToLp_closure]
-    rw [← orthogonal_orthogonal_eq_closure]
-    rw [← mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal]
-    rw [← LinearPMap.adjoint_graph_eq_graph_adjoint U.dense_domain]
-    rw [mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal]
+    rw [← IsClosable.graph_closure_eq_closure_graph U.is_closable,
+      mem_submodule_closure_iff_mem_submoduleToLp_closure,
+      ← orthogonal_orthogonal_eq_closure,
+      ← mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal,
+      ← LinearPMap.adjoint_graph_eq_graph_adjoint U.dense_domain,
+      mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal]
     rintro ⟨y, Uy⟩ hy
     simp only [neg_zero, WithLp.prod_inner_apply, inner_zero_right, add_zero]
     apply hx y
@@ -142,9 +141,10 @@ def adjoint : UnboundedOperator HS where
 @[inherit_doc]
 scoped postfix:1024 "†" => UnboundedOperator.adjoint
 
-instance instStar : Star (UnboundedOperator HS) where
+noncomputable instance instStar : Star (UnboundedOperator HS) where
   star := fun U ↦ U.adjoint
 
+@[simp]
 lemma adjoint_toLinearPMap : U†.toLinearPMap = U.toLinearPMap† := rfl
 
 lemma isSelfAdjoint_def : IsSelfAdjoint U ↔ U† = U := Iff.rfl
@@ -180,8 +180,9 @@ lemma adjoint_adjoint_eq_closure : U†† = U.closure := by
   ext f
   trans WithLp.toLp 2 f ∈ (submoduleToLp U.toLinearPMap.graph)ᗮᗮ
   · exact mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal _ _
-  rw [orthogonal_orthogonal_eq_closure]
-  rw [mem_submodule_closure_iff_mem_submoduleToLp_closure]
+  rw [orthogonal_orthogonal_eq_closure, mem_submodule_closure_iff_mem_submoduleToLp_closure]
+
+end Adjoints
 
 /-!
 ### Generalized eigenvectors
@@ -190,10 +191,10 @@ lemma adjoint_adjoint_eq_closure : U†† = U.closure := by
 /-- A map `F : D(U) →L[ℂ] ℂ` is a generalized eigenvector of an unbounded operator `U`
   if there is an eigenvalue `c` such that for all `ψ ∈ D(U)`, `F (U ψ) = c ⬝ F ψ`. -/
 def IsGeneralizedEigenvector (F : U.domain →L[ℂ] ℂ) (c : ℂ) : Prop :=
-  ∀ ψ : U.domain, ∃ ψ' : U.domain, ψ' = U ψ ∧ F ψ' = c • F ψ
+  ∀ ψ : U.domain, ∃ ψ' : U.domain, ψ' = U.toFun ψ ∧ F ψ' = c • F ψ
 
 lemma isGeneralizedEigenvector_ofSymmetric_iff
-    {f : E →ₗ[ℂ] E} {hf : f.IsSymmetric} (F : E →L[ℂ] ℂ) (c : ℂ) :
+    {f : E →ₗ[ℂ] E} (hf : f.IsSymmetric) (F : E →L[ℂ] ℂ) (c : ℂ) :
     IsGeneralizedEigenvector (ofSymmetric (hE := hE) f hf) F c ↔ ∀ ψ : E, F (f ψ) = c • F ψ := by
   constructor <;> intro h ψ
   · obtain ⟨ψ', hψ', hψ''⟩ := h ψ
@@ -204,5 +205,4 @@ lemma isGeneralizedEigenvector_ofSymmetric_iff
     exact ⟨by simp, h ψ⟩
 
 end UnboundedOperator
-end
 end QuantumMechanics
