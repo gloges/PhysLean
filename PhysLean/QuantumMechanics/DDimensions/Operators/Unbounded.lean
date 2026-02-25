@@ -59,9 +59,6 @@ def toFun' : U.domain → HS := U.toLinearPMap.toFun
 instance : CoeFun (UnboundedOperator HS)
   (fun U : UnboundedOperator HS ↦ U.domain → HS) := ⟨toFun'⟩
 
-@[simp]
-lemma toFun_eq_coe (x : U.domain) : U.toFun x = U.toLinearPMap.toFun x := rfl
-
 lemma ext' (U T : UnboundedOperator HS) : U.toLinearPMap = T.toLinearPMap → U = T := by
   intro h
   apply UnboundedOperator.ext
