@@ -37,7 +37,8 @@ def submoduleToLp : Submodule ℂ (WithLp 2 (E × E)) where
 lemma mem_submodule_iff_mem_submoduleToLp (f : E × E):
     f ∈ M ↔ (WithLp.toLp 2 f) ∈ submoduleToLp M := Eq.to_iff rfl
 
-lemma submoduleToLp_closure : (submoduleToLp M.closure) = (submoduleToLp M).topologicalClosure := by
+lemma submoduleToLp_closure :
+    (submoduleToLp M.topologicalClosure) = (submoduleToLp M).topologicalClosure := by
   rw [Submodule.ext_iff]
   intro x
   rw [← mem_submodule_iff_mem_submoduleToLp]
@@ -112,10 +113,8 @@ lemma mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal 
   simp only [← mem_orthogonal]
 
 lemma mem_submodule_closure_adjoint_iff_mem_submoduleToLp_closure_orthogonal (f : E × E):
-    f ∈ M.closure.adjoint ↔ WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp M).closureᗮ := by
-  trans (WithLp.toLp 2 (f.2, -f.1)) ∈ (submoduleToLp M.closure)ᗮ
-  · apply mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal M.closure f
-  rw [submoduleToLp_closure]
-  simp [← ClosedSubmodule.mem_toSubmodule_iff]
+    f ∈ M.topologicalClosure.adjoint ↔
+    WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp M).topologicalClosureᗮ := by
+  rw [mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal, submoduleToLp_closure]
 
 end InnerProductSpaceSubmodule

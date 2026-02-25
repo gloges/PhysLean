@@ -133,8 +133,7 @@ lemma adjoint_isClosable_dense (f : LinearPMap ℂ HS HS) (h_dense : Dense (f.do
     mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal]
   rintro ⟨y, Uy⟩ hy
   simp only [neg_zero, WithLp.prod_inner_apply, inner_zero_right, add_zero]
-  apply hx y
-  exact mem_domain_of_mem_graph hy
+  exact hx y (mem_domain_of_mem_graph hy)
 
 /-- The adjoint of an unbounded operator, denoted as `U†`. -/
 noncomputable def adjoint : UnboundedOperator HS where
@@ -154,8 +153,8 @@ lemma adjoint_toLinearPMap : U†.toLinearPMap = U.toLinearPMap† := rfl
 lemma isSelfAdjoint_def : IsSelfAdjoint U ↔ U† = U := Iff.rfl
 
 lemma isSelfAdjoint_iff : IsSelfAdjoint U ↔ IsSelfAdjoint U.toLinearPMap := by
-  rw [isSelfAdjoint_def, LinearPMap.isSelfAdjoint_def, ← adjoint_toLinearPMap]
-  exact UnboundedOperator.ext_iff' U† U
+  rw [isSelfAdjoint_def, LinearPMap.isSelfAdjoint_def, ← adjoint_toLinearPMap,
+    UnboundedOperator.ext_iff']
 
 lemma adjoint_isClosed : (U†).IsClosed := LinearPMap.adjoint_isClosed U.dense_domain
 
@@ -168,10 +167,8 @@ lemma closure_adjoint_eq_adjoint : U.closure† = U† := by
   rw [closure_toLinearPMap, ← IsClosable.graph_closure_eq_closure_graph U.is_closable]
 
   ext f
-  trans WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp U.toLinearPMap.graph).topologicalClosureᗮ
-  · exact mem_submodule_closure_adjoint_iff_mem_submoduleToLp_closure_orthogonal _ _
-  rw [orthogonal_closure]
-  exact Iff.symm (mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal _ _)
+  rw [mem_submodule_closure_adjoint_iff_mem_submoduleToLp_closure_orthogonal,
+    orthogonal_closure, mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal]
 
 lemma adjoint_adjoint_eq_closure : U†† = U.closure := by
   -- Reduce to statement about graphs using density and closability assumptions
@@ -182,9 +179,8 @@ lemma adjoint_adjoint_eq_closure : U†† = U.closure := by
   rw [closure_toLinearPMap, ← IsClosable.graph_closure_eq_closure_graph U.is_closable]
 
   ext f
-  trans WithLp.toLp 2 f ∈ (submoduleToLp U.toLinearPMap.graph)ᗮᗮ
-  · exact mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal _ _
-  rw [orthogonal_orthogonal_eq_closure, mem_submodule_closure_iff_mem_submoduleToLp_closure]
+  rw [mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal,
+    orthogonal_orthogonal_eq_closure, mem_submodule_closure_iff_mem_submoduleToLp_closure]
 
 end Adjoints
 
