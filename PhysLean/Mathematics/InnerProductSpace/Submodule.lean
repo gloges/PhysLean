@@ -34,7 +34,7 @@ def submoduleToLp : Submodule ℂ (WithLp 2 (E × E)) where
     intro c x hx
     exact Submodule.smul_mem M c hx
 
-lemma mem_submodule_iff_mem_submoduleToLp (f : E × E):
+lemma mem_submodule_iff_mem_submoduleToLp (f : E × E) :
     f ∈ M ↔ (WithLp.toLp 2 f) ∈ submoduleToLp M := Eq.to_iff rfl
 
 lemma submoduleToLp_closure :
@@ -67,7 +67,7 @@ lemma submoduleToLp_closure :
     use w.ofLp
     exact ⟨Set.mem_preimage.mp (ht1 (ht2' w hw.1)), (mem_toAddSubgroup (submoduleToLp M)).mp hw.2⟩
 
-lemma mem_submodule_closure_iff_mem_submoduleToLp_closure (f : E × E):
+lemma mem_submodule_closure_iff_mem_submoduleToLp_closure (f : E × E) :
     f ∈ M.topologicalClosure ↔ (WithLp.toLp 2 f) ∈ (submoduleToLp M).topologicalClosure := by
   rw [← submoduleToLp_closure]
   rfl
@@ -112,7 +112,7 @@ lemma mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal 
       simp [hw']
   simp only [← mem_orthogonal]
 
-lemma mem_submodule_closure_adjoint_iff_mem_submoduleToLp_closure_orthogonal (f : E × E):
+lemma mem_submodule_closure_adjoint_iff_mem_submoduleToLp_closure_orthogonal (f : E × E) :
     f ∈ M.topologicalClosure.adjoint ↔
     WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp M).topologicalClosureᗮ := by
   rw [mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal, submoduleToLp_closure]
