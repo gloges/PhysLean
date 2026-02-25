@@ -3,7 +3,7 @@ Copyright (c) 2026 Gregory J. Loges. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Gregory J. Loges
 -/
-import Mathlib.Analysis.InnerProductSpace.LinearPMap
+import PhysLean.Mathematics.InnerProductSpace.Submodule
 import PhysLean.QuantumMechanics.DDimensions.SpaceDHilbertSpace.SchwartzSubmodule
 /-!
 
@@ -103,115 +103,6 @@ lemma closure_toLinearPMap : U.closure.toLinearPMap = U.toLinearPMap.closure := 
 def IsClosed : Prop := U.toLinearPMap.IsClosed
 
 lemma closure_isClosed : U.closure.IsClosed := IsClosable.closure_isClosed U.is_closable
-
-/-!
-### Submodules of `HS × HS`
--/
-
-/-- The submodule of `WithLp 2 (HS × HS)` defined by `F`. -/
-def submoduleToLp : Submodule ℂ (WithLp 2 (HS × HS)) where
-  carrier := {x | x.ofLp ∈ F}
-  add_mem' := by
-    intro a b ha hb
-    exact Submodule.add_mem F ha hb
-  zero_mem' := Submodule.zero_mem F
-  smul_mem' := by
-    intro c x hx
-    exact Submodule.smul_mem F c hx
-
-omit [CompleteSpace HS] in
-lemma mem_submodule_iff_mem_submoduleToLp :
-    ∀ f, f ∈ F ↔ (WithLp.toLp 2 f) ∈ submoduleToLp F := fun _ => Eq.to_iff rfl
-
-omit [CompleteSpace HS] in
-lemma submoduleToLp_closure : (submoduleToLp F.closure) = (submoduleToLp F).topologicalClosure := by
-  rw [Submodule.ext_iff]
-  intro x
-  rw [← mem_submodule_iff_mem_submoduleToLp]
-  change x.ofLp ∈ _root_.closure F ↔ x ∈ _root_.closure (submoduleToLp F)
-  repeat rw [mem_closure_iff_nhds]
-  constructor
-  · intro h t ht
-    apply mem_nhds_iff.mp at ht
-    rcases ht with ⟨t1, ht1, ht1', hx⟩
-    have : ∃ t' ∈ nhds x.ofLp, (∀ y ∈ t', WithLp.toLp 2 y ∈ t1) := by
-      refine Filter.eventually_iff_exists_mem.mp ?_
-      apply ContinuousAt.eventually_mem (by fun_prop) (IsOpen.mem_nhds ht1' hx)
-    rcases this with ⟨t2, ht2, ht2'⟩
-    rcases h t2 ht2 with ⟨w, hw⟩
-    use WithLp.toLp 2 w
-    exact ⟨Set.mem_preimage.mp (ht1 (ht2' w hw.1)),
-      (mem_submodule_iff_mem_submoduleToLp F w).mpr hw.2⟩
-  · intro h t ht
-    apply mem_nhds_iff.mp at ht
-    rcases ht with ⟨t1, ht1, ht1', hx⟩
-    have : ∃ t' ∈ nhds x, (∀ y ∈ t', y.ofLp ∈ t1) := by
-      refine Filter.eventually_iff_exists_mem.mp ?_
-      exact ContinuousAt.eventually_mem (by fun_prop) (IsOpen.mem_nhds ht1' hx)
-    rcases this with ⟨t2, ht2, ht2'⟩
-    rcases h t2 ht2 with ⟨w, hw⟩
-    use w.ofLp
-    exact ⟨Set.mem_preimage.mp (ht1 (ht2' w hw.1)), (mem_toAddSubgroup (submoduleToLp F)).mp hw.2⟩
-
-omit [CompleteSpace HS] in
-lemma mem_submodule_closure_iff_mem_submoduleToLp_closure :
-    ∀ f, f ∈ F.topologicalClosure ↔ (WithLp.toLp 2 f) ∈ (submoduleToLp F).topologicalClosure := by
-  intro f
-  rw [← submoduleToLp_closure]
-  rfl
-
-omit [CompleteSpace HS] in
-lemma mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal :
-    ∀ f, f ∈ F.adjoint ↔ WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp F)ᗮ := by
-  intro f
-  constructor <;> intro h
-  · rw [mem_orthogonal]
-    intro u hu
-    rw [mem_adjoint_iff] at h
-    have h' : inner ℂ u.snd f.1 = inner ℂ u.fst f.2 := by
-      rw [← sub_eq_zero]
-      exact h u.fst u.snd hu
-    simp [h']
-  · rw [mem_adjoint_iff]
-    intro a b hab
-    rw [mem_orthogonal] at h
-    have hab' := (mem_submodule_iff_mem_submoduleToLp F (a, b)).mp hab
-    have h' : inner ℂ a f.2 = inner ℂ b f.1 := by
-      rw [← sub_eq_zero, sub_eq_add_neg, ← inner_neg_right]
-      exact h (WithLp.toLp 2 (a, b)) hab'
-    simp [h']
-
-omit [CompleteSpace HS] in
-lemma mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal :
-    ∀ f, f ∈ F.adjoint.adjoint ↔ WithLp.toLp 2 f ∈ (submoduleToLp F)ᗮᗮ := by
-  intro f
-  simp only [mem_adjoint_iff]
-  trans ∀ v, (∀ w ∈ submoduleToLp F, inner ℂ w v = 0) → inner ℂ v (WithLp.toLp 2 f) = 0
-  · constructor <;> intro h
-    · intro v hw
-      have h' := h (-v.snd) v.fst
-      rw [inner_neg_left, sub_neg_eq_add] at h'
-      apply h'
-      intro a b hab
-      rw [inner_neg_right, neg_sub_left, neg_eq_zero]
-      exact hw (WithLp.toLp 2 (a, b)) ((mem_submodule_iff_mem_submoduleToLp F (a, b)).mp hab)
-    · intro a b h'
-      rw [sub_eq_add_neg, ← inner_neg_left]
-      apply h (WithLp.toLp 2 (b, -a))
-      intro w hw
-      have hw' := h' w.fst w.snd hw
-      rw [sub_eq_zero] at hw'
-      simp [hw']
-  simp only [← mem_orthogonal]
-
-omit [CompleteSpace HS] in
-lemma mem_submodule_closure_adjoint_iff_mem_submoduleToLp_closure_orthogonal :
-    ∀ f, f ∈ F.closure.adjoint ↔ WithLp.toLp 2 (f.2, -f.1) ∈ (submoduleToLp F).closureᗮ := by
-  intro f
-  trans (WithLp.toLp 2 (f.2, -f.1)) ∈ (submoduleToLp F.closure)ᗮ
-  · apply mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal F.closure f
-  rw [submoduleToLp_closure]
-  simp [← ClosedSubmodule.mem_toSubmodule_iff]
 
 /-!
 ### Adjoints
