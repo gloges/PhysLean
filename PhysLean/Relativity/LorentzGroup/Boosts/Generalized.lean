@@ -470,7 +470,8 @@ lemma generalizedBoost_timeComponent_eq (u v : Velocity d) :
   nlinarith [mul_pow (u.1 (Sum.inl 0)) (‖v.1.spatialPart‖) 2,
              mul_pow (v.1 (Sum.inl 0)) (‖u.1.spatialPart‖) 2,
              Velocity.norm_spatialPart_sq_eq u, Velocity.norm_spatialPart_sq_eq v,
-             real_inner_comm (u.1.spatialPart) (v.1.spatialPart)]
+             real_inner_comm (u.1.spatialPart) (v.1.spatialPart),
+             Velocity.one_add_minkowskiProduct_ne_zero u v]
 
 end LorentzGroup
 
