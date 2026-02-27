@@ -124,11 +124,9 @@ lemma eLpNorm_mk {f : Space d → ℂ} {hf : MemHS f} : eLpNorm (mk hf) 2 = eLpN
 lemma mem_iff {f : Space d → ℂ} (hf : AEStronglyMeasurable f volume) :
     AEEqFun.mk f hf ∈ SpaceDHilbertSpace d ↔ Integrable (fun x ↦ ‖f x‖ ^ 2) := by
   rw [Lp.mem_Lp_iff_memLp, MemLp, eLpNorm_aeeqFun]
-
   have h1 := AEEqFun.aestronglyMeasurable (AEEqFun.mk f hf)
   have h2 : AEStronglyMeasurable (fun x ↦ norm (f x) ^ 2) :=
     AEStronglyMeasurable.pow (continuous_norm.comp_aestronglyMeasurable hf) 2
-
   simp only [h1]
   simp only [eLpNorm_lt_top_iff_lintegral_rpow_enorm_lt_top (NeZero.ne' 2).symm
     (ENNReal.top_ne_ofNat).symm, ENNReal.toReal_ofNat, ENNReal.rpow_ofNat]
