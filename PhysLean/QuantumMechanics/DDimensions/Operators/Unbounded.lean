@@ -165,7 +165,6 @@ lemma closure_adjoint_eq_adjoint : U.closure† = U† := by
   rw [adjoint_toLinearPMap, adjoint_graph_eq_graph_adjoint U.closure.dense_domain]
   rw [adjoint_toLinearPMap, adjoint_graph_eq_graph_adjoint U.dense_domain]
   rw [closure_toLinearPMap, ← IsClosable.graph_closure_eq_closure_graph U.is_closable]
-
   ext f
   rw [mem_submodule_closure_adjoint_iff_mem_submoduleToLp_closure_orthogonal,
     orthogonal_closure, mem_submodule_adjoint_iff_mem_submoduleToLp_orthogonal]
@@ -177,7 +176,6 @@ lemma adjoint_adjoint_eq_closure : U†† = U.closure := by
   rw [adjoint_toLinearPMap, adjoint_graph_eq_graph_adjoint U†.dense_domain]
   rw [adjoint_toLinearPMap, adjoint_graph_eq_graph_adjoint U.dense_domain]
   rw [closure_toLinearPMap, ← IsClosable.graph_closure_eq_closure_graph U.is_closable]
-
   ext f
   rw [mem_submodule_adjoint_adjoint_iff_mem_submoduleToLp_orthogonal_orthogonal,
     orthogonal_orthogonal_eq_closure, mem_submodule_closure_iff_mem_submoduleToLp_closure]
