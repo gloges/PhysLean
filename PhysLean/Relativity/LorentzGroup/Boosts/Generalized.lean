@@ -462,16 +462,16 @@ lemma generalizedBoost_timeComponent_eq (u v : Velocity d) :
       v.1.timeComponent • u.1.spatialPart‖ ^ 2 / (1 + ⟪u.1, v.1⟫ₘ) := by
   rw [generalizedBoost_apply_eq_toCoord]
   simp only [Matrix.one_apply_eq, inl_0_inl_0, one_mul]
+  have h := Velocity.one_add_minkowskiProduct_ne_zero u v
   rw [norm_sub_sq_real, norm_smul, norm_smul, Real.norm_eq_abs, Real.norm_eq_abs,
     Velocity.timeComponent_abs u, Velocity.timeComponent_abs v,
     real_inner_smul_left, real_inner_smul_right]
   simp only [timeComponent, minkowskiProduct_eq_timeComponent_spatialPart] at *
-  field_simp [Velocity.one_add_minkowskiProduct_ne_zero u v]
+  field_simp [h]
   nlinarith [mul_pow (u.1 (Sum.inl 0)) (‖v.1.spatialPart‖) 2,
              mul_pow (v.1 (Sum.inl 0)) (‖u.1.spatialPart‖) 2,
              Velocity.norm_spatialPart_sq_eq u, Velocity.norm_spatialPart_sq_eq v,
-             real_inner_comm (u.1.spatialPart) (v.1.spatialPart),
-             Velocity.one_add_minkowskiProduct_ne_zero u v]
+             real_inner_comm (u.1.spatialPart) (v.1.spatialPart)]
 
 end LorentzGroup
 
