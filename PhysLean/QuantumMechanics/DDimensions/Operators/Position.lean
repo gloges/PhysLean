@@ -145,8 +145,7 @@ lemma positionOperatorSqr_eq {ε : ℝ} (hε : 0 < ε) : ∑ i, 𝐱[i] ∘L �
 ## Unbounded position operators
 -/
 
-open SpaceDHilbertSpace UnboundedOperator
-open MeasureTheory
+open SpaceDHilbertSpace
 
 /-- The position operators defined on the Schwartz submodule. -/
 def positionOperatorSchwartz : schwartzSubmodule d →ₗ[ℂ] schwartzSubmodule d :=
