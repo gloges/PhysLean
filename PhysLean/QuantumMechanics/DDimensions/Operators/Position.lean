@@ -11,8 +11,19 @@ import PhysLean.SpaceAndTime.Space.Derivatives.Basic
 # Position operators
 
 In this module we define:
-- The position vector operator on Schwartz maps, component-wise.
-- The (regularized) real powers of the radius operator on Schwartz maps.
+- `positionOperator i` acting on Schwartz maps `𝓢(Space d, ℂ)` by multiplication by `xᵢ`.
+- `radiusRegPowOperator ε s` acting on Schwartz maps `𝓢(Space d, ℂ)` by multiplication
+  by `(‖x‖² + ε²)^(s/2)`, a smooth regularization of `‖x‖ˢ`.
+- `positionUnboundedOperator i`, a symmetric unbounded operator acting on the Schwartz submodule
+  of the Hilbert space `SpaceDHilbertSpace d`.
+- `radiusRegPowUnboundedOperator ε s`, a symmetric unbounded operator acting on the Schwartz
+  submodule of the Hilbert space `SpaceDHilbertSpace d`. For `s ≤ 0` this operator is bounded
+  (by `ε⁻ˢ`) and has natural domain the entire Hilbert space, but for uniformity we use the same
+  domain for all `s`.
+
+We also introduce the following notation:
+- `𝐱[i]` for `positionOperator i`
+- `𝐫[ε,s]` for `radiusRegPowOperator ε s`
 
 -/
 
