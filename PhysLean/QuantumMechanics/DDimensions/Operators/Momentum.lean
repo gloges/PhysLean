@@ -15,6 +15,18 @@ In this module we define:
 - The momentum operator on Schwartz maps, component-wise.
 - The momentum squared operator on Schwartz maps.
 
+
+In this module we define:
+- `momentumOperator i` acting on Schwartz maps `𝓢(Space d, ℂ)` as `-Iℏ∂ᵢ`.
+- `momentumOperatorSqr` acting on Schwartz maps `𝓢(Space d, ℂ)` as `∑ᵢ 𝐩[i]∘𝐩[i]`.
+- `momentumUnboundedOperator i`, a symmetric unbounded operator acting on the Schwartz submodule
+  of the Hilbert space `SpaceDHilbertSpace d`.
+
+We also introduce the following notation:
+- `𝐩[i]` for `momentumOperator i`
+- `𝐩²` for `momentumOperatorSqr`
+
+
 -/
 
 namespace QuantumMechanics
