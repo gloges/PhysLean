@@ -723,31 +723,6 @@ lemma HermitianMat.inner_supportProj_of_ker_le {A B : HermitianMat d ℂ}
     ⟪A, B.supportProj⟫ = A.trace := by
   rw [inner_def, mul_supportProj_of_ker_le A B h, trace]
 
-attribute [fun_prop] ContinuousAt.rpow
-
-lemma continuousOn_rpow_uniform {K : Set ℝ} (hK : IsCompact K) :
-    ContinuousOn (fun r : ℝ ↦ UniformOnFun.ofFun {K} (fun t : ℝ ↦ t ^ r)) (Set.Ioi 0) := by
-  refine continuousOn_of_forall_continuousAt fun r hr => ?_
-  rw [Set.mem_Ioi] at hr
-  apply UniformOnFun.tendsto_iff_tendstoUniformlyOn.mpr
-  simp only [Set.mem_singleton_iff, UniformOnFun.toFun_ofFun, Metric.tendstoUniformlyOn_iff,
-    Function.comp_apply, forall_eq]
-  intro ε hεpos;
-  have h_unif_cont : UniformContinuousOn (fun (p : ℝ × ℝ) => p.1 ^ p.2) (K ×ˢ Set.Icc (r / 2) (r * 2)) := by
-    apply IsCompact.uniformContinuousOn_of_continuous
-    · exact hK.prod CompactIccSpace.isCompact_Icc
-    · refine continuousOn_of_forall_continuousAt fun p ⟨hp₁, ⟨hp₂₁, hp₂₂⟩⟩ ↦ ?_
-      have _ : p.1 ≠ 0 ∨ 0 < p.2 := by right; linarith
-      fun_prop (disch := assumption)
-  rw [Metric.uniformContinuousOn_iff] at h_unif_cont
-  obtain ⟨δ, hδpos, H⟩ := h_unif_cont ε hεpos
-  filter_upwards [Ioo_mem_nhds (show r / 2 < r by linarith) (show r < r * 2 by linarith), Ioo_mem_nhds (show r - δ < r by linarith) (show r < r + δ by linarith)] with n ⟨_, _⟩ ⟨_, _⟩ x hx
-  refine H (x, r) ⟨hx, ?_⟩ (x, n) ⟨hx, ?_⟩ ?_
-  · constructor <;> linarith
-  · constructor <;> linarith
-  · have : |r - n| < δ := abs_lt.mpr ⟨by linarith, by linarith⟩
-    simpa
-
 theorem sandwichedRelRentropy_additive_alpha_one_aux (ρ₁ σ₁ : MState d₁) (ρ₂ σ₂ : MState d₂)
   (h1 : σ₁.M.ker ≤ ρ₁.M.ker) (h2 : σ₂.M.ker ≤ ρ₂.M.ker) :
     ⟪(ρ₁ ⊗ᴹ ρ₂).M, (ρ₁ ⊗ᴹ ρ₂).M.log - (σ₁ ⊗ᴹ σ₂).M.log⟫ =
@@ -786,10 +761,6 @@ private theorem sandwichedRelRentropy_additive_alpha_one (ρ₁ σ₁ : MState d
     contrapose! h1
     exact (ker_le_of_ker_kron_le_left ρ₁ σ₁ ρ₂ σ₂) h1
 
-@[simp]
-lemma HermitianMat.rpow_zero (A : HermitianMat d 𝕜) : A ^ (0 : ℝ) = 1 := by
-  simp [rpow_eq_cfc]
-
 open scoped Kronecker in
 omit [DecidableEq d₁] [DecidableEq d₂] in
 lemma HermitianMat.conj_kron
@@ -798,44 +769,12 @@ lemma HermitianMat.conj_kron
   ext1
   simp [conj, Matrix.mul_kronecker_mul, Matrix.conjTranspose_kronecker]
 
-lemma HermitianMat.rpow_diagonal (a : d → ℝ) (r : ℝ) :
-  (diagonal ℂ a) ^ r = diagonal ℂ (fun i => a i ^ r) := by
-    exact cfc_diagonal _ _
-
-private lemma HermitianMat.pow_kron_diagonal
-    (a : d₁ → ℝ) (b : d₂ → ℝ) (r : ℝ) (ha : ∀ i, 0 ≤ a i) (hb : ∀ j, 0 ≤ b j) :
-    ((diagonal ℂ a) ⊗ₖ (diagonal ℂ b)) ^ r =
-    ((diagonal ℂ a) ^ r) ⊗ₖ ((diagonal ℂ b) ^ r) := by
-  simp only [kronecker_diagonal, rpow_diagonal]
-  congr! 2 with x
-  apply Real.mul_rpow (ha x.1) (hb x.2)
-
-open scoped Kronecker Matrix in
-lemma HermitianMat.pow_kron
-    {A : HermitianMat d₁ ℂ} {B : HermitianMat d₂ ℂ} (r : ℝ) (hA : 0 ≤ A) (hB : 0 ≤ B) :
-    (A ⊗ₖ B) ^ r = (A ^ r) ⊗ₖ (B ^ r) := by
-  obtain ⟨U, a, ha, hA⟩ : ∃ U : 𝐔[d₁], ∃ a : d₁ → ℝ, (∀ i, 0 ≤ a i) ∧ A = conj U.val (diagonal ℂ a) := by
-    rw [zero_le_iff] at hA
-    exact ⟨_, _, hA.eigenvalues_nonneg, eq_conj_diagonal A⟩
-  obtain ⟨V, b, hb, hB⟩ : ∃ V : 𝐔[d₂], ∃ b : d₂ → ℝ, (∀ j, 0 ≤ b j) ∧ B = conj V.val (diagonal ℂ b) := by
-    rw [zero_le_iff] at hB
-    exact ⟨_, _, hB.eigenvalues_nonneg, eq_conj_diagonal B⟩
-  have h_kron_r_pow : (A ⊗ₖ B) ^ r = conj (U ⊗ᵤ V).val ((diagonal ℂ a ⊗ₖ diagonal ℂ b) ^ r) := by
-    subst hB hA
-    rw [← rpow_conj_unitary, Matrix.unitary_kron, conj_kron]
-  rw [h_kron_r_pow]
-  subst A B
-  have h_kron_r_pow_diag : (diagonal ℂ a ⊗ₖ diagonal ℂ b) ^ r = ((diagonal ℂ a) ^ r) ⊗ₖ ((diagonal ℂ b) ^ r) := by
-    exact pow_kron_diagonal a b r ha hb
-  rw [h_kron_r_pow_diag, Matrix.unitary_kron]
-  rw [rpow_conj_unitary, rpow_conj_unitary, ← conj_kron]
-
 lemma sandwiched_term_product (ρ₁ σ₁ : MState d₁) (ρ₂ σ₂ : MState d₂) (α β : ℝ) :
     (((ρ₁ ⊗ᴹ ρ₂).M.conj ((σ₁ ⊗ᴹ σ₂).M ^ β).mat) ^ α).trace =
     ((ρ₁.M.conj (σ₁.M ^ β).mat) ^ α).trace * ((ρ₂.M.conj (σ₂.M ^ β).mat) ^ α).trace := by
   simp only [MState.prod]
   rw [← HermitianMat.trace_kronecker]
-  rw [← HermitianMat.pow_kron α ?_ ?_, ← HermitianMat.conj_kron,
+  rw [← HermitianMat.rpow_kron α ?_ ?_, ← HermitianMat.conj_kron,
     HermitianMat.pow_kron β σ₁.nonneg σ₂.nonneg, HermitianMat.kronecker_mat]
   · exact HermitianMat.conj_nonneg _ ρ₁.nonneg
   · exact HermitianMat.conj_nonneg _ ρ₂.nonneg
