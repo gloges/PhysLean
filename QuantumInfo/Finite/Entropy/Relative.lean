@@ -294,7 +294,7 @@ Hermitian trace Hölder inequality: for PSD A, B and conjugate exponents p, q > 
 ⟪A, B⟫ ≤ Tr[A^p]^(1/p) * Tr[B^q]^(1/q).
 -/
 lemma HermitianMat.inner_le_trace_rpow_mul
-    (A B : HermitianMat d ℂ) (hA : 0 ≤ A) (hB : 0 ≤ B)
+    {A B : HermitianMat d ℂ} (hA : 0 ≤ A) (hB : 0 ≤ B)
     (p q : ℝ) (hp : 1 < p) (hpq : 1/p + 1/q = 1) :
     ⟪A, B⟫_ℝ ≤ (A ^ p).trace ^ (1/p) * (B ^ q).trace ^ (1/q) := by
   by_cases hq : q > 1;
@@ -390,54 +390,32 @@ private lemma trace_conj_rpow_eq_inner (hα₀ : 0 < α) (hα : α < 1) :
   rotate_right;
   exact fun x => x.re;
   · unfold HermitianMat.conj;
-    simp +decide [ Matrix.trace, Matrix.mul_apply, Matrix.conjTranspose_apply, inner ];
+    simp [ Matrix.trace, Matrix.mul_apply, inner]
     rw [ show ( 1 - α ) / ( 2 * α ) * α = ( 1 - α ) / 2 by rw [ div_mul_eq_mul_div, div_eq_iff ] <;> linarith ];
     -- By the properties of the trace, we can rearrange the terms inside the trace.
     have h_trace : Matrix.trace ((σ.M ^ ((1 - α) / 2)).mat * (ρ.M ^ α).mat * (σ.M ^ ((1 - α) / 2)).mat) = Matrix.trace ((ρ.M ^ α).mat * (σ.M ^ (1 - α)).mat) := by
       have h_trace : (σ.M ^ ((1 - α) / 2)).mat * (σ.M ^ ((1 - α) / 2)).mat = (σ.M ^ (1 - α)).mat := by
         have := σ.nonneg;
-        rw [ ← HermitianMat.mat_rpow_add this ] ; ring;
+        rw [ ← HermitianMat.mat_rpow_add this ]
+        ring_nf
         linarith;
       rw [ ← h_trace, Matrix.mul_assoc ];
-      rw [ ← Matrix.trace_mul_comm ] ; simp +decide [ Matrix.mul_assoc ] ;
+      rw [ ← Matrix.trace_mul_comm ]
+      simp [ Matrix.mul_assoc ]
     convert congr_arg Complex.re h_trace using 1;
-    simp +decide [ Matrix.trace, Matrix.mul_apply ];
+    simp [ Matrix.trace, Matrix.mul_apply ];
   · exact HermitianMat.inner_eq_re_trace _ _
 
-/-
-PROVIDED SOLUTION
-We need to show `⟪ρ.M ^ α, σ.M ^ (1 - α)⟫_ℝ ≤ 1` for `0 < α < 1`.
-Step 1: Apply `HermitianMat.inner_le_trace_rpow_mul` with A = ρ.M ^ α, B = σ.M ^ (1 - α), p = 1/α, q = 1/(1-α).
-Check hypotheses:
-- `0 ≤ ρ.M ^ α`: by `HermitianMat.rpow_nonneg ρ.nonneg`
-- `0 ≤ σ.M ^ (1 - α)`: by `HermitianMat.rpow_nonneg σ.nonneg`
-- `1 < 1/α`: since `0 < α < 1`, we have `1/α > 1`
-- `1/p + 1/q = α + (1 - α) = 1`: check by `field_simp; ring` or similar
-Step 2: Simplify the RHS:
-`((ρ.M ^ α) ^ (1/α)).trace ^ (1/(1/α)) * ((σ.M ^ (1-α)) ^ (1/(1-α))).trace ^ (1/(1/(1-α)))`
-Using `HermitianMat.rpow_mul`:
-- `(ρ.M ^ α) ^ (1/α) = ρ.M ^ (α * (1/α)) = ρ.M ^ 1 = ρ.M` (via `rpow_mul ρ.nonneg`, then `α * (1/α) = 1` by `mul_div_cancel₀`)
-- `(σ.M ^ (1-α)) ^ (1/(1-α)) = σ.M ^ 1 = σ.M`
-Note `ρ.M ^ 1 = ρ.M` by simp or `rpow_one` or similar.
-Step 3: The trace of ρ.M is 1 (by `ρ.tr` or `simp`) and trace of σ.M is 1.
-And `1/(1/α) = α`, `1/(1/(1-α)) = 1-α`.
-So the RHS = `1^α * 1^{1-α} = 1`.
-Thus `⟪ρ.M^α, σ.M^{1-α}⟫_ℝ ≤ 1`.
--/
 private lemma inner_rpow_le_one (hα₀ : 0 < α) (hα : α < 1) :
     ⟪ρ.M ^ α, σ.M ^ (1 - α)⟫_ℝ ≤ 1 := by
-  convert HermitianMat.inner_le_trace_rpow_mul _ _ _ _ _ _ _ _ using 1;
-  rotate_left;
-  (expose_names; exact inst_1);
-  apply_rules [ HermitianMat.rpow_nonneg ];
-  exact ρ.nonneg;
-  apply_rules [ HermitianMat.rpow_nonneg, σ.nonneg ];
-  exact 1 / α;
-  exact 1 / ( 1 - α );
-  · rw [ lt_div_iff₀ ] <;> linarith;
-  · norm_num;
-  · rw [ ← HermitianMat.rpow_mul ρ.nonneg, ← HermitianMat.rpow_mul σ.nonneg ] ; norm_num [ hα₀.ne', hα.ne ];
-    norm_num [ ne_of_gt ( sub_pos.mpr hα ) ]
+  convert HermitianMat.inner_le_trace_rpow_mul
+      (HermitianMat.rpow_nonneg ρ.nonneg) (HermitianMat.rpow_nonneg σ.nonneg)
+      (1 / α) (1 / (1 - α)) _ _ using 1
+  · rw [← HermitianMat.rpow_mul ρ.nonneg, ← HermitianMat.rpow_mul σ.nonneg]
+    simp [hα₀.ne', (sub_pos.mpr hα).ne']
+  · field_simp
+    exact hα
+  · simp
 
 /-
 PROBLEM
@@ -461,16 +439,10 @@ Step 2: By inner_le_trace_rpow_mul with p = 1/α > 1, q' = 1/(1-α) > 1:
   Use rpow_mul to simplify (ρ^α)^{1/α} = ρ, etc.
   Use ρ.tr and σ.tr for Tr[ρ] = 1, Tr[σ] = 1.
 -/
-private theorem sandwiched_trace_of_lt_1 (h : σ.M.ker ≤ ρ.M.ker) (hα₀ : 0 < α) (hα : α < 1) :
+private theorem sandwiched_trace_of_lt_1 (hα₀ : 0 < α) (hα : α < 1) :
     ((ρ.M.conj (σ.M ^ ((1 - α)/(2 * α)) ).mat) ^ α).trace ≤ 1 := by
-  set t := (1 - α) / (2 * α)
-  calc ((ρ.M.conj (σ.M ^ t).mat) ^ α).trace
-      _ ≤ ((ρ.M ^ α).conj (σ.M ^ (t * α)).mat).trace := by
-          exact HermitianMat.araki_lieb_thirring_le_one ρ.M σ.M ρ.nonneg σ.nonneg t α hα₀ hα.le
-      _ = ⟪ρ.M ^ α, σ.M ^ (1 - α)⟫_ℝ := by
-          exact trace_conj_rpow_eq_inner hα₀ hα
-      _ ≤ 1 := by
-          exact inner_rpow_le_one hα₀ hα
+  grw [HermitianMat.araki_lieb_thirring_le_one ρ.nonneg σ.nonneg _ hα₀ hα.le]
+  grw [trace_conj_rpow_eq_inner hα₀ hα, inner_rpow_le_one hα₀ hα]
 
 /-- For PSD A and p ≠ 0, `A^{-p} * A^p = HermitianMat.supportProj A`. -/
 lemma HermitianMat.rpow_neg_mul_rpow_eq_supportProj
@@ -641,7 +613,7 @@ private theorem sandwichedRelRentropy_nonneg_α_lt_1 (h : σ.M.ker ≤ ρ.M.ker)
   apply div_nonneg_of_nonpos
   · apply Real.log_nonpos
     · exact (sandwiched_trace_pos h).le
-    · exact sandwiched_trace_of_lt_1 h hα0 hα
+    · exact sandwiched_trace_of_lt_1 hα0 hα
   · linarith
 
 private theorem sandwichedRelRentropy_nonneg_α_gt_1 (h : σ.M.ker ≤ ρ.M.ker) (hα : α > 1) :

@@ -258,105 +258,59 @@ theorem rpowApprox_mono {A B : HermitianMat d ℂ} (hA : A.mat.PosDef) (hB : B.m
     (hAB : A ≤ B) (hq : 0 ≤ q) (T : ℝ) (hT : 0 < T) :
     rpowApprox A q T ≤ rpowApprox B q T := by
   unfold HermitianMat.rpowApprox
-  generalize_proofs at *; exact (by
-  -- Apply the integral_mono_ae theorem to conclude the proof.
   have h_integral_mono : ∀ᵐ t ∂MeasureTheory.Measure.restrict MeasureTheory.volume (Set.Ioc 0 T), t ^ q • ((1 + t)⁻¹ • (1 : HermitianMat d ℂ) - (A + t • 1)⁻¹) ≤ t ^ q • ((1 + t)⁻¹ • (1 : HermitianMat d ℂ) - (B + t • 1)⁻¹) := by
-    filter_upwards [ MeasureTheory.ae_restrict_mem measurableSet_Ioc ] with t ht
+    filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_Ioc] with t ht
     have h_inv_antitone : (B + t • 1)⁻¹ ≤ (A + t • 1)⁻¹ := by
-      apply_rules [ inv_antitone, add_le_add_right ];
-      exact hA.add_posSemidef ( Matrix.PosSemidef.smul ( Matrix.PosSemidef.one ) ht.1.le )
-    have h_smul : t ^ q • ((1 + t)⁻¹ • (1 : HermitianMat d ℂ) - (A + t • 1)⁻¹) ≤ t ^ q • ((1 + t)⁻¹ • (1 : HermitianMat d ℂ) - (B + t • 1)⁻¹) := by
-      convert smul_le_smul_of_nonneg_left ( sub_le_sub_left h_inv_antitone _ ) ( Real.rpow_nonneg ht.1.le q ) using 1
-    exact h_smul
-  generalize_proofs at *; exact (by
-  rw [ intervalIntegral.integral_of_le hT.le, intervalIntegral.integral_of_le hT.le ] at *; exact MeasureTheory.integral_mono_ae (by
-  refine' ContinuousOn.integrableOn_Icc _ |> fun h => h.mono_set <| Set.Ioc_subset_Icc_self
-  generalize_proofs at *; exact (by
+      apply inv_antitone
+      · exact hA.add_posSemidef ( Matrix.PosSemidef.smul ( Matrix.PosSemidef.one ) ht.1.le )
+      · exact add_le_add_right hAB _
+    exact smul_le_smul_of_nonneg_left (sub_le_sub_left h_inv_antitone _) (Real.rpow_nonneg ht.1.le q)
+  rw [ intervalIntegral.integral_of_le hT.le, intervalIntegral.integral_of_le hT.le ] at *
+  refine MeasureTheory.integral_mono_ae ?_ ?_ h_integral_mono
+  · refine ContinuousOn.integrableOn_Icc ?_ |> fun h => h.mono_set <| Set.Ioc_subset_Icc_self
     have h_cont : ContinuousOn (fun t : ℝ => t ^ q) (Set.Icc 0 T) := by
       exact continuousOn_id.rpow_const fun x hx => Or.inr <| by linarith;
     have h_cont_inv : ContinuousOn (fun t : ℝ => (A + t • 1 : Matrix d d ℂ)⁻¹) (Set.Icc 0 T) := by
       have h_cont_inv : ∀ t ∈ Set.Icc 0 T, (A + t • 1 : Matrix d d ℂ).PosDef := by
         intro t ht
-        have h_pos_def : (A + t • 1 : Matrix d d ℂ).PosDef := by
-          apply_rules [ Matrix.PosDef.add_posSemidef, hA ];
-          simp +decide [ Matrix.PosSemidef, ht.1 ];
-          simp +decide [ Matrix.IsHermitian, Matrix.mulVec, dotProduct ];
-          simp +decide [ Matrix.one_apply, Finset.mul_sum _ _ _, mul_assoc, mul_comm, mul_left_comm, ht.1 ];
-          exact fun x => Finset.sum_nonneg fun i _ => by rw [ mul_left_comm ] ; exact mul_nonneg ( by simpa [ Complex.ext_iff ] using ht.1 ) ( by simp +decide [ Complex.mul_conj, Complex.normSq_eq_norm_sq ] ) ;
-        exact h_pos_def
-        skip
-      generalize_proofs at *; exact (by
+        exact hA.add_posSemidef (Matrix.PosSemidef.one.smul ht.1)
       have h_cont_inv : ContinuousOn (fun t : ℝ => (A + t • 1 : Matrix d d ℂ)⁻¹) (Set.Icc 0 T) := by
         have h_det_cont : ContinuousOn (fun t : ℝ => Matrix.det (A + t • 1 : Matrix d d ℂ)) (Set.Icc 0 T) := by
           fun_prop (disch := solve_by_elim)
         have h_adj_cont : ContinuousOn (fun t : ℝ => Matrix.adjugate (A + t • 1 : Matrix d d ℂ)) (Set.Icc 0 T) := by
           fun_prop (disch := solve_by_elim)
-        simp_all +decide [ Matrix.inv_def ];
+        simp_all [Matrix.inv_def]
         exact ContinuousOn.smul ( h_det_cont.inv₀ fun t ht => by specialize h_cont_inv t ht.1 ht.2; exact h_cont_inv.det_pos.ne' ) h_adj_cont
-        skip
-      generalize_proofs;
-      convert h_cont_inv using 1
-      skip)
+      exact h_cont_inv
     have h_cont_inv : ContinuousOn (fun t : ℝ => (1 + t)⁻¹ • (1 : HermitianMat d ℂ) - (A + t • 1 : Matrix d d ℂ)⁻¹) (Set.Icc 0 T) := by
       exact ContinuousOn.sub ( ContinuousOn.smul ( ContinuousOn.inv₀ ( continuousOn_const.add continuousOn_id ) fun t ht => by linarith [ ht.1 ] ) continuousOn_const ) h_cont_inv
-      skip -- This is a placeholder to prevent the code from being executed. In a real proof, this would be replaced with the actual proof steps.;
-    generalize_proofs at *; (
     convert h_cont.smul h_cont_inv using 1
-    generalize_proofs at *; (
-    ext; simp +decide [ Subtype.ext_iff ] ;
-    exact?))
-  )) (by
-  -- The function $t^q$ is continuous on $[0, T]$ since $q \geq 0$.
-  have h_cont_tq : ContinuousOn (fun t : ℝ => t ^ q) (Set.Icc 0 T) := by
-    exact continuousOn_id.rpow_const fun x hx => Or.inr <| by linarith;
-  generalize_proofs at *; exact (by
+    ext
+    exact continuousOn_iff_coe _
+  · have h_cont_tq : ContinuousOn (fun t : ℝ => t ^ q) (Set.Icc 0 T) := by
+      exact continuousOn_id.rpow_const fun x hx => Or.inr hq
     have h_cont_inv : ContinuousOn (fun t : ℝ => (B + t • 1)⁻¹) (Set.Icc 0 T) := by
       have h_cont_inv : ∀ t ∈ Set.Icc 0 T, (B + t • 1).mat.PosDef := by
-        intro t ht; exact (by
-        convert hB.add_posSemidef ( show ( t • 1 : Matrix d d ℂ ).PosSemidef from ?_ ) using 1
-        generalize_proofs at *; exact (by
-          have h_pos_semidef : ∀ (c : ℝ), 0 ≤ c → (c • (1 : Matrix d d ℂ)).PosSemidef := by
-            intro c hc; exact (by
-              have h_pos_semidef : (1 : Matrix d d ℂ).PosSemidef := by
-                exact?
-              exact?
-            )
-          exact h_pos_semidef t ht.1
-        ));
-      generalize_proofs at *; exact (by
-        have h_det_cont : ContinuousOn (fun t : ℝ => (B + t • 1).mat.det) (Set.Icc 0 T) := by
-          fun_prop (disch := solve_by_elim)
-        have h_adj_cont : ContinuousOn (fun t : ℝ => (B + t • 1).mat.adjugate) (Set.Icc 0 T) := by
-          fun_prop (disch := solve_by_elim)
-        have h_inv_cont : ContinuousOn (fun t : ℝ => (B + t • 1).mat⁻¹) (Set.Icc 0 T) := by
-          have h_inv_cont : ∀ t ∈ Set.Icc 0 T, (B + t • 1).mat⁻¹ = (B + t • 1).mat.det⁻¹ • (B + t • 1).mat.adjugate := by
-            intro t ht; rw [ Matrix.inv_def ] ; aesop;
-          exact ContinuousOn.congr ( ContinuousOn.smul ( h_det_cont.inv₀ fun t ht => ne_of_gt <| h_cont_inv t ht |> fun h => h.det_pos ) h_adj_cont ) h_inv_cont
-          skip
-        generalize_proofs at *; exact (by
-        exact?)
-      )
-    exact ContinuousOn.integrableOn_Icc ( by exact ContinuousOn.smul ( h_cont_tq ) ( by exact ContinuousOn.sub ( ContinuousOn.smul ( ContinuousOn.inv₀ ( continuousOn_const.add continuousOn_id ) fun x hx => by linarith [ hx.1 ] ) continuousOn_const ) h_cont_inv ) ) |> fun h => h.mono_set <| Set.Ioc_subset_Icc_self
-  )) h_integral_mono;))
+        intro t ht
+        exact hB.add_posSemidef (Matrix.PosSemidef.one.rsmul ht.1)
+      have h_det_cont : ContinuousOn (fun t : ℝ => (B + t • 1).mat.det) (Set.Icc 0 T) := by
+        fun_prop (disch := solve_by_elim)
+      have h_adj_cont : ContinuousOn (fun t : ℝ => (B + t • 1).mat.adjugate) (Set.Icc 0 T) := by
+        fun_prop (disch := solve_by_elim)
+      have h_inv_cont : ContinuousOn (fun t : ℝ => (B + t • 1).mat⁻¹) (Set.Icc 0 T) := by
+        have h_inv_cont : ∀ t ∈ Set.Icc 0 T, (B + t • 1).mat⁻¹ = (B + t • 1).mat.det⁻¹ • (B + t • 1).mat.adjugate := by
+          intro t ht
+          simp [Matrix.inv_def]
+        exact ContinuousOn.congr ( ContinuousOn.smul ( h_det_cont.inv₀ fun t ht => ne_of_gt <| h_cont_inv t ht |> fun h => h.det_pos ) h_adj_cont ) h_inv_cont
+      exact (continuousOn_iff_coe fun t => (B + t • 1)⁻¹).mpr h_inv_cont
+    exact (h_cont_tq.smul ((((continuousOn_const.add continuousOn_id).inv₀ (by grind)).smul
+      continuousOn_const).sub h_cont_inv)).integrableOn_Icc.mono_set (Set.Ioc_subset_Icc_self)
 
 open MeasureTheory ComplexOrder in
 /-- The scalar function underlying rpowApprox via the CFC. -/
 noncomputable def scalarRpowApprox (q T x : ℝ) : ℝ :=
   ∫ t in (0)..T, t ^ q * (1 / (1 + t) - 1 / (x + t))
 
-/-
-PROVIDED SOLUTION
-Use `integral_cfc_eq_cfc_integral` from CFC.lean. The rpowApprox integrand `t^q • ((1+t)⁻¹ • 1 - (A+t•1)⁻¹)` can be expressed in the CFC as `A.cfc (fun x => t^q * (1/(1+t) - 1/(x+t)))`.
-Steps:
-1. Show `(1+t)⁻¹ • (1 : HermitianMat d ℂ) - (A + t • 1)⁻¹ = A.cfc (fun x => 1/(1+t) - 1/(x+t))` for PosDef A and t > 0.
-   - `(1 : HermitianMat d ℂ) = A.cfc (fun _ => 1)` when summing spectral projections
-   - `(A + t • 1)⁻¹ = A.cfc (fun x => 1/(x+t))` by the CFC of the inverse
-2. Then `t^q • A.cfc(...) = A.cfc (fun x => t^q * (...))` by linearity of CFC (smul_cfc).
-3. Apply `integral_cfc_eq_cfc_integral` to swap integral and CFC.
-4. The scalar integral becomes `scalarRpowApprox q T`.
-This is exactly analogous to `logApprox_eq_cfc_scalar` in LogExp.lean.
-Key: Need to verify integrability condition for `integral_cfc_eq_cfc_integral`, which requires each eigenvalue component to be intervalIntegrable.
--/
 open MeasureTheory ComplexOrder in
 theorem rpowApprox_eq_cfc_scalar (A : HermitianMat d ℂ) (hA : A.mat.PosDef) (q T : ℝ)
     (hq : 0 ≤ q) (hT : 0 < T) :
@@ -370,15 +324,14 @@ theorem rpowApprox_eq_cfc_scalar (A : HermitianMat d ℂ) (hA : A.mat.PosDef) (q
             rw [ show ( fun u => u + t ) = ( fun u => u ) + fun u => t from rfl, cfc_add ] ; aesop;
           have h_inv_comp : (A.cfc (fun u => u + t))⁻¹ = A.cfc (fun u => (u + t)⁻¹) := by
             have h_inv_smul : ∀ {f : ℝ → ℝ} (hf : ∀ i, f (A.H.eigenvalues i) ≠ 0), (A.cfc f)⁻¹ = A.cfc (fun u => (f u)⁻¹) := by
-              exact?
+              exact fun {f} hf => inv_cfc_eq_cfc_inv f hf
             apply h_inv_smul
             intro i
             have h_eigenvalue_pos : 0 < A.H.eigenvalues i := by
-              exact?
+              exact Matrix.PosDef.eigenvalues_pos hA i
             exact ne_of_gt (add_pos h_eigenvalue_pos ht.left);
           rw [h_inv_def, h_inv_comp];
         exact h_inv
-        skip;
       rw [ h_integrand, ← cfc_const ];
       rw [ ← cfc_sub ];
       rfl;
@@ -389,14 +342,14 @@ theorem rpowApprox_eq_cfc_scalar (A : HermitianMat d ℂ) (hA : A.mat.PosDef) (q
       intro u
       have h_integrable : IntervalIntegrable (fun t : ℝ => t ^ q * (1 / (1 + t) - 1 / (A.H.eigenvalues u + t))) MeasureTheory.volume 0 T := by
         have h_pos : 0 < A.H.eigenvalues u := by
-          exact?
+          exact Matrix.PosDef.eigenvalues_pos hA u
         exact ContinuousOn.intervalIntegrable ( by exact ContinuousOn.mul ( continuousOn_id.rpow_const fun x hx => Or.inr <| by linarith ) <| ContinuousOn.sub ( continuousOn_const.div ( continuousOn_const.add continuousOn_id ) fun x hx => by linarith [ Set.mem_Icc.mp <| by simpa [ hT.le ] using hx ] ) ( continuousOn_const.div ( continuousOn_const.add continuousOn_id ) fun x hx => by linarith [ Set.mem_Icc.mp <| by simpa [ hT.le ] using hx ] ) ) ..;
-      generalize_proofs at *; (exact h_integrable)
-    generalize_proofs at *; (
-    exact?)
-  generalize_proofs at *; (
+      exact h_integrable
+    exact integral_cfc_eq_cfc_integral _ _ _ h_integrable
   unfold HermitianMat.rpowApprox scalarRpowApprox; simp_all +singlePass;
-  rw [ ← rpowApprox_integral_eq, intervalIntegral.integral_of_le hT.le, MeasureTheory.integral_Ioc_eq_integral_Ioo ] at *; rw [ MeasureTheory.setIntegral_congr_fun measurableSet_Ioo fun t ht => rpowApprox_eq_cfc_scalar t ht.1 ht.2.le ] ; simp +decide [ ← MeasureTheory.integral_Ioc_eq_integral_Ioo, intervalIntegral.integral_of_le hT.le ] ;)
+  rw [ ← rpowApprox_integral_eq, intervalIntegral.integral_of_le hT.le, MeasureTheory.integral_Ioc_eq_integral_Ioo ] at *
+  rw [ MeasureTheory.setIntegral_congr_fun measurableSet_Ioo fun t ht => rpowApprox_eq_cfc_scalar t ht.1 ht.2.le ]
+  simp [ ← MeasureTheory.integral_Ioc_eq_integral_Ioo, intervalIntegral.integral_of_le hT.le ]
 
 /-- The positive constant arising from the resolvent integral.
     Equal to `∫ u in Set.Ioi 0, u ^ (q-1) / (1+u)` = `π / sin(π q)`,
@@ -415,9 +368,9 @@ lemma rpowConst_pos (hq : 0 < q) (hq1 : q < 1) : 0 < rpowConst q := by
   unfold rpowConst;
   have h_nonzero : 0 < ∫ u in Set.Ioi (0 : ℝ), u ^ (q - 1) / (1 + u) := by
     have h_integrable : MeasureTheory.IntegrableOn (fun u : ℝ => u ^ (q - 1) / (1 + u)) (Set.Ioi (0 : ℝ)) := by
-      exact?
+      exact rpowConst_integrableOn hq hq1
     rw [ MeasureTheory.integral_pos_iff_support_of_nonneg_ae ];
-    · simp +decide [ Function.support, hq.ne', hq1.ne ];
+    · simp [Function.support]
       exact lt_of_lt_of_le ( by norm_num ) ( MeasureTheory.measure_mono <| show Set.Ioi ( 0 : ℝ ) ⊆ { x : ℝ | ¬x ^ ( q - 1 ) = 0 ∧ ¬1 + x = 0 } ∩ Set.Ioi 0 from fun x hx => ⟨ ⟨ ne_of_gt <| Real.rpow_pos_of_pos hx _, ne_of_gt <| add_pos zero_lt_one hx ⟩, hx ⟩ );
     · filter_upwards [ MeasureTheory.ae_restrict_mem measurableSet_Ioi ] with u hu using div_nonneg ( Real.rpow_nonneg hu.out.le _ ) ( add_nonneg zero_le_one hu.out.le );
     · exact h_integrable;
@@ -445,21 +398,6 @@ lemma tendsto_rpowApprox (hA : A.mat.PosDef) (hq : 0 < q) (hq1 : q < 1) :
     Tendsto (rpowApprox A q) atTop (nhds (rpowConst q • (A ^ q - 1))) := by
   sorry
 
-/-
-PROVIDED SOLUTION
-For q = 1: trivial since A^1 = A and B^1 = B, and A ≤ B is given. Use rpow_one.
-For q < 1: Use le_of_tendsto_of_tendsto with:
-- tendsto_rpowApprox hA hq hq1 : rpowApprox A q → rpowConst q • (A^q - 1)
-- tendsto_rpowApprox hB hq hq1 : rpowApprox B q → rpowConst q • (B^q - 1)
-  where hB := posDef_of_posDef_le hA hAB
-The EventuallyLE follows from rpowApprox_mono.
-From le_of_tendsto_of_tendsto:
-  rpowConst q • (A^q - 1) ≤ rpowConst q • (B^q - 1)
-Since rpowConst q > 0 (by rpowConst_pos):
-  A^q - 1 ≤ B^q - 1 (cancel the positive scalar)
-  A^q ≤ B^q (add 1 to both sides)
-Use smul_le_smul_iff_of_pos or similar.
--/
 open MeasureTheory ComplexOrder Filter in
 theorem rpow_le_rpow_of_posDef (hA : A.mat.PosDef) (hAB : A ≤ B)
     (hq : 0 < q) (hq1 : q ≤ 1) : A ^ q ≤ B ^ q := by
@@ -471,75 +409,47 @@ theorem rpow_le_rpow_of_posDef (hA : A.mat.PosDef) (hAB : A ≤ B)
       filter_upwards [ Filter.eventually_gt_atTop 0 ] with T hT using rpowApprox_mono hA ( posDef_of_posDef_le hA hAB ) hAB hq.le T hT |> le_trans <| by aesop;);
     have h_rpow_pos : 0 < rpowConst q := by
       exact rpowConst_pos hq ( lt_of_le_of_ne hq1 hq_eq_one );
-    simp_all +decide [ ← Subtype.coe_le_coe, Subtype.ext_iff ]
+    simp_all
 
-/-
-PROVIDED SOLUTION
-Extend from PosDef to PSD by continuity.
-For ε > 0, let Aε = A + ε • 1 and Bε = B + ε • 1.
-- Aε.mat.PosDef (since A ≥ 0 and ε > 0)
-- Bε.mat.PosDef (since B ≥ A ≥ 0 and ε > 0)
-- Aε ≤ Bε (since A ≤ B implies A + ε•1 ≤ B + ε•1)
-- By rpow_le_rpow_of_posDef: Aε^q ≤ Bε^q
-As ε → 0+:
-- Aε → A, Bε → B (trivially)
-- Aε^q → A^q and Bε^q → B^q by rpow_const_continuous (which requires 0 ≤ q, true since 0 < q)
-Since the PSD cone is closed (limits preserve ≤), we get A^q ≤ B^q.
-Use Filter.Tendsto and le_of_tendsto_of_tendsto with the filter atTop or (nhds 0) from the right.
-Or use a sequence εₙ = 1/n → 0.
-Key: rpow_const_continuous gives continuity of M ↦ M^q (for q ≥ 0), so (A + ε•1)^q → A^q as ε → 0.
--/
 open ComplexOrder Filter in
 theorem rpow_le_rpow_of_le (hA : 0 ≤ A) (hAB : A ≤ B)
     (hq : 0 < q) (hq1 : q ≤ 1) : A ^ q ≤ B ^ q := by
   -- For ε > 0, let Aε = A + ε • 1 and Bε = B + ε • 1.
   set Aε : ℝ → HermitianMat d ℂ := fun ε => A + ε • 1
   set Bε : ℝ → HermitianMat d ℂ := fun ε => B + ε • 1
-  generalize_proofs at *;
   -- For ε > 0, Aε and Bε are positive definite and Aε ≤ Bε.
   have h_pos_def : ∀ ε > 0, (Aε ε).mat.PosDef ∧ (Bε ε).mat.PosDef ∧ Aε ε ≤ Bε ε := by
     intro ε hε_pos
     have h_pos_def_Aε : (Aε ε).mat.PosDef := by
       constructor <;> norm_num [ hε_pos, hA, hAB ];
-      · exact?;
+      · exact H (Aε ε)
       · intro x hx_nonzero
         have h_inner : star x ⬝ᵥ (Aε ε).mat.mulVec x = star x ⬝ᵥ A.mat.mulVec x + ε * star x ⬝ᵥ x := by
-          simp +decide [ Aε, Matrix.add_mulVec, Matrix.smul_eq_diagonal_mul ] ; ring
-          generalize_proofs at *; (
-          simp +decide [ Matrix.mulVec, dotProduct, Finset.mul_sum _ _ _, mul_assoc, mul_left_comm, Finset.sum_mul ];
-          simp +decide [ Matrix.one_apply, Finset.mul_sum _ _ _ ])
-        generalize_proofs at *; (
+          simp [ Aε, Matrix.add_mulVec]
+          ring_nf
+          simp [ Matrix.mulVec, dotProduct, Finset.mul_sum _ _ _, mul_assoc, mul_left_comm];
+          simp [ Matrix.one_apply]
         have h_inner_nonneg : 0 ≤ star x ⬝ᵥ A.mat.mulVec x := by
-          exact?
-        generalize_proofs at *; (
+          exact inner_mulVec_nonneg hA x
         have h_inner_pos : 0 < star x ⬝ᵥ x := by
-          simp_all +decide [ Complex.mul_conj, Complex.normSq_apply ]
-        generalize_proofs at *; (
-        exact h_inner.symm ▸ add_pos_of_nonneg_of_pos h_inner_nonneg ( mul_pos ( mod_cast hε_pos ) ( mod_cast h_inner_pos ) ) |> lt_of_lt_of_le <| le_rfl;)))
+          simp_all
+        exact h_inner.symm ▸ add_pos_of_nonneg_of_pos h_inner_nonneg ( mul_pos ( mod_cast hε_pos ) ( mod_cast h_inner_pos ) ) |> lt_of_lt_of_le <| le_rfl;
     have h_pos_def_Bε : (Bε ε).mat.PosDef := by
       convert posDef_of_posDef_le h_pos_def_Aε _ using 1
-      generalize_proofs at *; (
-      exact add_le_add_right hAB _ |> le_trans ( by simp +decide [ Aε, Bε ] ) ;)
+      exact add_le_add_right hAB _ |> le_trans ( by simp [ Aε ] ) ;
     have h_le_Aε_Bε : Aε ε ≤ Bε ε := by
-      exact add_le_add_right hAB _ |> le_trans <| by simp +decide [ Aε, Bε ] ;
+      exact add_le_add_right hAB _ |> le_trans <| by simp [ Bε ] ;
     exact ⟨h_pos_def_Aε, h_pos_def_Bε, h_le_Aε_Bε⟩
-    skip
-  generalize_proofs at *; (
   -- By the continuity of the function $M \mapsto M^q$, we have $(Aε ε)^q \to A^q$ and $(Bε ε)^q \to B^q$ as $\epsilon \to 0^+$.
   have h_cont : Filter.Tendsto (fun ε => (Aε ε) ^ q) (nhdsWithin 0 (Set.Ioi 0)) (nhds (A ^ q)) ∧ Filter.Tendsto (fun ε => (Bε ε) ^ q) (nhdsWithin 0 (Set.Ioi 0)) (nhds (B ^ q)) := by
     have h_cont : ContinuousOn (fun M : HermitianMat d ℂ => M ^ q) (Set.univ : Set (HermitianMat d ℂ)) := by
       -- Apply the continuity of the function $M \mapsto M^q$ on the set of all Hermitian matrices.
       apply rpow_const_continuous hq.le |> Continuous.continuousOn
-      skip -- This should be unreachable as the proof should be complete. If it's reachable, there's a mistake in the proof steps. The user should check their steps to ensure that all necessary hypotheses are included and that the proof flows logically. If the proof is correct, the `unreachable!` should be removed. If there's a mistake, the user needs to correct the steps leading to this point.
-      -- This should be unreachable as the proof should be complete. If it's reachable, there's a mistake in the proof steps. The user should check their steps to ensure that all necessary hypotheses are included and that the proof flows logically. If the proof is correct, the `unreachable!` should be removed. If there's a mistake, the user needs to correct the steps leading to this point.
-    generalize_proofs at *; (
-    refine' ⟨ h_cont.continuousAt ( by simpa ) |> fun h => h.tendsto.comp ( tendsto_nhdsWithin_of_tendsto_nhds <| Continuous.tendsto' _ _ _ _ ), h_cont.continuousAt ( by simpa ) |> fun h => h.tendsto.comp ( tendsto_nhdsWithin_of_tendsto_nhds <| Continuous.tendsto' _ _ _ _ ) ⟩ <;> continuity;)
-  generalize_proofs at *; (
+    refine' ⟨ h_cont.continuousAt ( by simp ) |> fun h => h.tendsto.comp ( tendsto_nhdsWithin_of_tendsto_nhds <| Continuous.tendsto' _ _ _ _ ), h_cont.continuousAt ( by simp ) |> fun h => h.tendsto.comp ( tendsto_nhdsWithin_of_tendsto_nhds <| Continuous.tendsto' _ _ _ _ ) ⟩ <;> continuity;
   -- By the continuity of the function $M \mapsto M^q$, we have $(Aε ε)^q \leq (Bε ε)^q$ for all $\epsilon > 0$.
   have h_le : ∀ ε > 0, (Aε ε) ^ q ≤ (Bε ε) ^ q := by
-    exact fun ε hε => rpow_le_rpow_of_posDef ( h_pos_def ε hε |>.1 ) ( h_pos_def ε hε |>.2.2 ) hq hq1 |> le_trans <| by simp +decide [ * ] ;
-  generalize_proofs at *; (
-  exact le_of_tendsto_of_tendsto h_cont.1 h_cont.2 ( Filter.eventually_of_mem self_mem_nhdsWithin fun ε hε => h_le ε hε ) |> fun h => by simpa using h;)))
+    exact fun ε hε => rpow_le_rpow_of_posDef ( h_pos_def ε hε |>.1 ) ( h_pos_def ε hε |>.2.2 ) hq hq1 |> le_trans <| by simp [ * ] ;
+  exact le_of_tendsto_of_tendsto h_cont.1 h_cont.2 ( Filter.eventually_of_mem self_mem_nhdsWithin fun ε hε => h_le ε hε ) |> fun h => by simpa using h;
 
 end LoewnerHeinz
 
@@ -550,8 +460,8 @@ variable {A B : HermitianMat d ℂ} {q r : ℝ}
 /-- Araki-Lieb-Thirring inequality for 0 < q ≤ 1:
     `Tr[(B^r A B^r)^q] ≤ Tr[B^{rq} A^q B^{rq}]`. -/
 lemma araki_lieb_thirring_le_one
-    (A B : HermitianMat d ℂ) (hA : 0 ≤ A) (hB : 0 ≤ B)
-    (r q : ℝ) (hq0 : 0 < q) (hq1 : q ≤ 1) :
+    {A B : HermitianMat d ℂ} (hA : 0 ≤ A) (hB : 0 ≤ B)
+    (r : ℝ) {q : ℝ} (hq0 : 0 < q) (hq1 : q ≤ 1) :
     ((A.conj (B ^ r).mat) ^ q).trace ≤ ((A ^ q).conj (B ^ (r * q)).mat).trace := by
   sorry
 
