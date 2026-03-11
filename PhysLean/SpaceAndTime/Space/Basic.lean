@@ -296,15 +296,16 @@ lemma manifoldStructure_comp_manifoldStructure_symm {d : ℕ} :
   simpa using (manifoldStructure d).right_inv' (x := x) (by simp [manifoldStructure])
 
 @[simp]
+lemma manifoldStructure_comp_manifoldStructure_symm_apply {d : ℕ}
+    (x : EuclideanSpace ℝ (Fin d)) :
+    (manifoldStructure d) ((manifoldStructure d).symm x) = x := by
+  simpa using (manifoldStructure d).right_inv' (x := x) (by simp [manifoldStructure])
+
+@[simp]
 lemma range_manifoldStructure {d : ℕ} :
     (Set.range ↑(manifoldStructure d)) = Set.univ := by
   ext x
-  simp
-  use (manifoldStructure d).symm x
-  change (↑(manifoldStructure d) ∘ ↑(manifoldStructure d).symm)  x = x
-  rw [manifoldStructure_comp_manifoldStructure_symm]
-  simp
-
+  simpa using ⟨(manifoldStructure d).symm x, manifoldStructure_comp_manifoldStructure_symm_apply x⟩
 
 open Manifold in
 lemma contMDiff_vaddConst (d : ℕ) : ContMDiff

@@ -497,13 +497,13 @@ lemma mk_contDiff {d  : ℕ} {n : WithTop ℕ∞}:
 lemma fderiv_mk {d : ℕ} (f : Fin d → ℝ) :
     fderiv ℝ Space.mk f = (equivPi d).symm := by
   change fderiv ℝ (equivPi d).symm f = _
-  rw [@ContinuousLinearEquiv.fderiv]
+  rw [ContinuousLinearEquiv.fderiv]
 
 @[simp]
 lemma fderiv_val {d : ℕ} (p : Space d) :
     fderiv ℝ Space.val p = (equivPi d) := by
   change fderiv ℝ (equivPi d) p = _
-  rw [@ContinuousLinearEquiv.fderiv]
+  rw [ContinuousLinearEquiv.fderiv]
 
 @[fun_prop]
 lemma contDiffOn_vadd (s : Space d) :
@@ -515,39 +515,29 @@ lemma contDiffOn_vadd (s : Space d) :
 
 @[fun_prop]
 lemma vadd_differentiable {d} (s : Space d) :
-    Differentiable ℝ (fun (v : EuclideanSpace ℝ (Fin d)) => v +ᵥ s) := by
-  apply Differentiable.comp
-  · exact mk_differentiable
-  · fun_prop
+    Differentiable ℝ (fun (v : EuclideanSpace ℝ (Fin d)) => v +ᵥ s) :=
+  mk_differentiable.comp <| by fun_prop
 
 @[fun_prop]
 lemma contDiffOn_vsub (s1 : Space d) :
-    ContDiffOn ℝ ω (fun (s : Space d) => s -ᵥ s1) Set.univ := by
-  rw [contDiffOn_univ]
-  refine fun_comp ?_ ?_
-  · fun_prop
-  · fun_prop
+    ContDiffOn ℝ ω (fun (s : Space d) => s -ᵥ s1) Set.univ :=
+  contDiffOn_univ.mpr <| fun_comp (PiLp.contDiff_toLp) (by fun_prop)
 
 @[fun_prop]
 lemma vsub_differentiable {d} (s1 : Space d) :
-    Differentiable ℝ (fun (s : Space d) => s -ᵥ s1) := by
-  apply Differentiable.comp
-  · exact PiLp.contDiff_toLp.differentiable (NeZero.ne' 2).symm
-  · fun_prop
+    Differentiable ℝ (fun (s : Space d) => s -ᵥ s1) :=
+  (PiLp.contDiff_toLp.differentiable (NeZero.ne' 2).symm).comp (by fun_prop)
 
 lemma fderiv_space_components {M d} [NormedAddCommGroup M] [NormedSpace ℝ M]
     (μ : Fin d) (f : M → Space d) (hf : Differentiable ℝ f) (m dm : M):
     fderiv ℝ f m dm μ  = fderiv ℝ (fun m' => f m' μ) m dm := by
   trans fderiv ℝ (Space.coordCLM μ ∘ fun m' => f m') m dm
-  swap
+  · rw [fderiv_comp _ (by fun_prop) (by fun_prop), ContinuousLinearMap.fderiv,
+      ContinuousLinearMap.coe_comp', Function.comp_apply]
+    simp [coordCLM, coord_apply]
   · congr
     ext i
     simp [coordCLM, coord_apply]
-  rw [fderiv_comp]
-  simp
-  simp [coordCLM, coord_apply]
-  · fun_prop
-  · fun_prop
 
 /-!
 
@@ -661,30 +651,21 @@ lemma oneEquiv_symm_measurePreserving : MeasurePreserving oneEquiv.symm volume v
 
 -/
 
-
-
-
 open Manifold in
-/-- A diffeomorphism between the two different manifold sturctures on `Space d`,
+/-- A diffeomorphism between the two different manifold structures on `Space d`,
   that equivalent to `manifoldStructure d` and that equivalent to `𝓘(ℝ, Space d)` -/
 noncomputable def modelDiffeo {d} :
     Diffeomorph (manifoldStructure d) 𝓘(ℝ, Space d) (Space d) (Space d) ⊤ where
   toFun p :=  p
   invFun p :=  p
-  left_inv := fun _ => rfl
-  right_inv := fun _ => rfl
+  left_inv _ := rfl
+  right_inv _ := rfl
   contMDiff_toFun := by
-    rw [contMDiff_iff]
-    refine ⟨?_, ?_⟩
-    · simpa using  continuous_id'
-    intro x y
+    refine contMDiff_iff.mpr ⟨continuous_id', fun x y => ?_⟩
     simp [manifoldStructure]
     fun_prop
   contMDiff_invFun := by
-    rw [contMDiff_iff]
-    refine ⟨?_, ?_⟩
-    · simpa using  continuous_id'
-    intro x y
+    refine contMDiff_iff.mpr ⟨continuous_id', fun x y => ?_⟩
     simp [manifoldStructure]
     fun_prop
 
