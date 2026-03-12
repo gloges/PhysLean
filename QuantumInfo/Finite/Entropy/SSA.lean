@@ -373,27 +373,9 @@ private noncomputable def S_mat (ρAB : HermitianMat (dA × dB) ℂ) (σBC : Her
   (ρAB.traceRight⁻¹.sqrt.mat ⊗ₖ σBC.sqrt.mat).reindex
     (Equiv.prodAssoc dA dB dC).symm (Equiv.prodAssoc dA dB dC).symm
 
-/-
-PROBLEM
-**Step 1**: W†W = S * (ρ_AB ⊗ σ_C⁻¹) * S, i.e. W†W equals the conj of LHS by S.
-  This follows from: W = (ρAB^½ ⊗ σC^{-½}) * S, so W†W = S† * (ρAB^½ ⊗ σC^{-½})† * (ρAB^½ ⊗ σC^{-½}) * S
-  = S * (ρAB ⊗ σC⁻¹) * S (using sqrt_sq and Hermiticity of S).
-PROVIDED SOLUTION
-W_mat = term1 * term2_reindexed where term1 = ρAB.sqrt.mat ⊗ₖ σC⁻¹.sqrt.mat and term2_reindexed = (ρA⁻¹.sqrt.mat ⊗ₖ σBC.sqrt.mat).reindex(e,e) = S_mat.
-So W†W = S† * term1† * term1 * S.
-Since ρAB.sqrt and σC⁻¹.sqrt are Hermitian (they are HermitianMat.sqrt values), term1 = ρAB.sqrt.mat ⊗ₖ σC⁻¹.sqrt.mat is Hermitian. So term1† = term1.
-And term1 * term1 = (ρAB.sqrt.mat * ρAB.sqrt.mat) ⊗ₖ (σC⁻¹.sqrt.mat * σC⁻¹.sqrt.mat) by mul_kronecker_mul.
-Now ρAB.sqrt.mat * ρAB.sqrt.mat = ρAB.mat by sqrt_sq (since ρAB is PosDef hence ≥ 0).
-And σC⁻¹.sqrt.mat * σC⁻¹.sqrt.mat = σC⁻¹.mat by sqrt_sq (since σC = σBC.traceLeft is PosDef hence σC⁻¹ is PosDef hence ≥ 0). Here σC⁻¹ = (σBC.traceLeft)⁻¹.
-So term1 * term1 = ρAB.mat ⊗ₖ (σBC.traceLeft)⁻¹.mat = (ρAB ⊗ₖ (σBC.traceLeft)⁻¹).mat.
-Similarly, S is Hermitian (as a reindexed Kronecker product of Hermitian matrices), so S† = S.
-Therefore W†W = S * (ρAB ⊗ₖ (σBC.traceLeft)⁻¹).mat * S.
-Key facts to use:
-- conjTranspose of Kronecker: (A ⊗ₖ B)ᴴ = Aᴴ ⊗ₖ Bᴴ (use Matrix.kroneckerMap_conjTranspose or Matrix.conjTranspose_kronecker)
-- HermitianMat.sqrt is Hermitian, so its .mat has conjTranspose = itself
-- sqrt_sq for ≥ 0 matrices
-- mul_kronecker_mul for distributing matrix multiplication over Kronecker products
-- reindex commutes with conjTranspose
+/- W†W = S * (ρ_AB ⊗ σ_C⁻¹) * S, i.e. W†W equals the conj of LHS by S.
+This follows from: W = (ρAB^½ ⊗ σC^{-½}) * S, so W†W = S† * (ρAB^½ ⊗ σC^{-½})† * (ρAB^½ ⊗ σC^{-½}) * S
+= S * (ρAB ⊗ σC⁻¹) * S (using sqrt_sq and Hermiticity of S).
 -/
 private lemma W_mat_sq_eq_conj [Nonempty dA] [Nonempty dB] [Nonempty dC]
     (ρAB : HermitianMat (dA × dB) ℂ) (σBC : HermitianMat (dB × dC) ℂ)
@@ -401,45 +383,28 @@ private lemma W_mat_sq_eq_conj [Nonempty dA] [Nonempty dB] [Nonempty dC]
     (W_mat ρAB σBC)ᴴ * (W_mat ρAB σBC) =
       S_mat ρAB σBC * (ρAB ⊗ₖ (σBC.traceLeft)⁻¹).mat * S_mat ρAB σBC := by
   unfold W_mat S_mat;
-  simp +decide [ Matrix.mul_assoc, Matrix.conjTranspose_mul, Matrix.conjTranspose_kronecker ];
+  simp [ Matrix.mul_assoc, Matrix.conjTranspose_mul, Matrix.conjTranspose_kronecker ];
   have h_simp : (ρAB.sqrt : Matrix (dA × dB) (dA × dB) ℂ) * (ρAB.sqrt : Matrix (dA × dB) (dA × dB) ℂ) = ρAB ∧ (σBC.traceLeft⁻¹.sqrt : Matrix dC dC ℂ) * (σBC.traceLeft⁻¹.sqrt : Matrix dC dC ℂ) = σBC.traceLeft⁻¹ := by
     constructor;
     · convert sqrt_sq ( show 0 ≤ ρAB from ?_ ) using 1
       generalize_proofs at *;
       convert hρ.posSemidef using 1
-      skip;
-      exact?;
+      exact zero_le_iff;
     · convert sqrt_sq ( show 0 ≤ ( σBC.traceLeft⁻¹ : HermitianMat dC ℂ ) from ?_ ) using 1;
       have h_inv_pos : (σBC.traceLeft⁻¹ : HermitianMat dC ℂ).mat.PosDef := by
         have h_inv_pos : (σBC.traceLeft : Matrix dC dC ℂ).PosDef := by
-          exact?;
+          exact PosDef_traceLeft σBC hσ;
         convert h_inv_pos.inv using 1;
       convert h_inv_pos.posSemidef using 1;
-      exact?;
+      exact zero_le_iff;
   have h_simp : (ρAB.sqrt : Matrix (dA × dB) (dA × dB) ℂ) ⊗ₖ (σBC.traceLeft⁻¹.sqrt : Matrix dC dC ℂ) * (ρAB.sqrt : Matrix (dA × dB) (dA × dB) ℂ) ⊗ₖ (σBC.traceLeft⁻¹.sqrt : Matrix dC dC ℂ) = (ρAB : Matrix (dA × dB) (dA × dB) ℂ) ⊗ₖ (σBC.traceLeft⁻¹ : Matrix dC dC ℂ) := by
     have h_simp : ∀ (A B C D : Matrix (dA × dB) (dA × dB) ℂ) (E F : Matrix dC dC ℂ), (A ⊗ₖ E) * (B ⊗ₖ F) = (A * B) ⊗ₖ (E * F) := by
-      exact?;
+      exact fun A B C D E F => Eq.symm (Matrix.mul_kronecker_mul A B E F);
     aesop;
-  simp_all +decide [ ← Matrix.mul_assoc ]
+  simp_all [ ← Matrix.mul_assoc ]
 
-/-
-PROBLEM
-**Step 2**: S * (ρ_A ⊗ σ_BC⁻¹).reindex * S = I.
-  This follows from (ρ_A^{-½} * ρ_A * ρ_A^{-½}) ⊗ (σ_BC^½ * σ_BC⁻¹ * σ_BC^½) = I ⊗ I = I.
-PROVIDED SOLUTION
-We need S * RHS.mat * S = 1 where S = (ρA⁻¹.sqrt.mat ⊗ₖ σBC.sqrt.mat).reindex(e,e) and RHS = (ρA ⊗ₖ σBC⁻¹).reindex(e) where e = (prodAssoc).symm and ρA = ρAB.traceRight.
-First, RHS.mat = (ρA.mat ⊗ₖ σBC⁻¹.mat).reindex(e,e) (since .reindex commutes with .mat).
-So S * RHS.mat * S = ((P ⊗ₖ Q).reindex(e,e)) * ((R ⊗ₖ T).reindex(e,e)) * ((P ⊗ₖ Q).reindex(e,e)) where P = ρA⁻¹.sqrt.mat, Q = σBC.sqrt.mat, R = ρA.mat, T = σBC⁻¹.mat.
-Since matrix multiplication distributes over reindex: (A.reindex e e) * (B.reindex e e) = (A * B).reindex e e (when e is an equivalence).
-So the product = ((P ⊗ₖ Q) * (R ⊗ₖ T) * (P ⊗ₖ Q)).reindex(e,e).
-By mul_kronecker_mul: (P ⊗ₖ Q) * (R ⊗ₖ T) = (P*R) ⊗ₖ (Q*T).
-And then * (P ⊗ₖ Q) = (P*R*P) ⊗ₖ (Q*T*Q).
-P*R*P = ρA⁻¹.sqrt.mat * ρA.mat * ρA⁻¹.sqrt.mat = 1 (by sqrt_inv_mul_self_mul_sqrt_inv_eq_one, since ρA is PosDef from PosDef_traceRight).
-Q*T*Q = σBC.sqrt.mat * σBC⁻¹.mat * σBC.sqrt.mat. Since σBC is PosDef, σBC.sqrt commutes with σBC⁻¹ (they're both functions of σBC), so Q*T*Q = σBC.sqrt.mat * σBC.sqrt.mat * σBC⁻¹.mat = σBC.mat * σBC⁻¹.mat = 1 (by sqrt_sq and mul_nonsing_inv).
-Actually, for the commutation, both σBC.sqrt and σBC⁻¹ are functions of σBC (via cfc), so they commute. The key lemma is that σBC.sqrt.mat commutes with σBC⁻¹.mat, which can be established using the Commute machinery.
-So (P*R*P) ⊗ₖ (Q*T*Q) = 1 ⊗ₖ 1 = 1.
-And 1.reindex(e,e) = 1 (reindexing the identity is the identity).
-So S * RHS.mat * S = 1.
+/- **Step 2**: S * (ρ_A ⊗ σ_BC⁻¹).reindex * S = I.
+This follows from (ρ_A^{-½} * ρ_A * ρ_A^{-½}) ⊗ (σ_BC^½ * σ_BC⁻¹ * σ_BC^½) = I ⊗ I = I.
 -/
 private lemma S_mat_conj_rhs_eq_one [Nonempty dA] [Nonempty dB] [Nonempty dC]
     (ρAB : HermitianMat (dA × dB) ℂ) (σBC : HermitianMat (dB × dC) ℂ)
@@ -448,20 +413,20 @@ private lemma S_mat_conj_rhs_eq_one [Nonempty dA] [Nonempty dB] [Nonempty dC]
       S_mat ρAB σBC = 1 := by
   have h_comm : Commute (σBC.sqrt.mat) (σBC⁻¹.mat) := by
     have h_comm : Commute (σBC.sqrt.mat) (σBC.mat) := by
-      exact?;
+      exact commute_sqrt_left rfl;
     have h_comm_inv : Commute (σBC.sqrt.mat) (σBC.mat) → Commute (σBC.sqrt.mat) (σBC⁻¹.mat) := by
       intro h_comm
       have h_comm_inv : Commute (σBC.sqrt.mat) (σBC.mat) → Commute (σBC.sqrt.mat) (σBC.mat⁻¹) := by
         intro h_comm
         have h_inv : σBC.mat⁻¹ * σBC.sqrt.mat = σBC.sqrt.mat * σBC.mat⁻¹ := by
           have h_inv : σBC.mat⁻¹ * σBC.sqrt.mat * σBC.mat = σBC.sqrt.mat := by
-            simp +decide [ mul_assoc, h_comm.eq ];
+            simp [ mul_assoc, h_comm.eq ];
             rw [ ← mul_assoc, Matrix.nonsing_inv_mul _ ];
             · rw [ one_mul ];
             · exact isUnit_iff_ne_zero.mpr hσ.det_pos.ne';
           have h_inv : σBC.mat⁻¹ * σBC.sqrt.mat * σBC.mat * σBC.mat⁻¹ = σBC.sqrt.mat * σBC.mat⁻¹ := by
             rw [h_inv];
-          convert h_inv using 1 ; simp +decide [ mul_assoc, hσ.det_pos.ne' ]
+          convert h_inv using 1 ; simp [ mul_assoc, hσ.det_pos.ne' ]
         exact h_inv.symm;
       convert h_comm_inv h_comm using 1;
     exact h_comm_inv h_comm;
@@ -469,49 +434,28 @@ private lemma S_mat_conj_rhs_eq_one [Nonempty dA] [Nonempty dB] [Nonempty dC]
     rw [ mul_assoc, ← h_comm.eq ];
     rw [ ← Matrix.mul_assoc, HermitianMat.sqrt_sq ];
     convert hσ.posSemidef using 1;
-    exact?;
+    exact zero_le_iff;
   have h_comm : ρAB.traceRight⁻¹.sqrt.mat * ρAB.traceRight.mat * ρAB.traceRight⁻¹.sqrt.mat = 1 := by
     have h_comm : ρAB.traceRight.mat.PosDef := by
       apply_rules [ PosDef_traceRight ];
     convert sqrt_inv_mul_self_mul_sqrt_inv_eq_one h_comm using 1;
   convert congr_arg₂ ( fun x y => Matrix.kronecker x y |> Matrix.reindex ( Equiv.prodAssoc dA dB dC ).symm ( Equiv.prodAssoc dA dB dC ).symm ) h_comm ( show ( σBC.sqrt.mat * σBC⁻¹.mat * σBC.sqrt.mat ) = 1 from ?_ ) using 1;
-  · unfold S_mat; simp +decide [ *, Matrix.mul_assoc ] ;
-    ext ⟨ i, j ⟩ ⟨ k, l ⟩ ; simp +decide [ Matrix.mul_apply, Matrix.kroneckerMap_apply ] ; ring;
-    simp +decide only [mul_assoc, Finset.mul_sum _ _ _, Finset.sum_mul];
-    simp +decide only [← Finset.sum_product'];
-    refine' Finset.sum_bij ( fun x _ => ( x.1.2, x.2.2, x.1.1, x.2.1 ) ) _ _ _ _ <;> simp +decide;
+  · unfold S_mat; simp [ *, Matrix.mul_assoc ] ;
+    ext ⟨ i, j ⟩ ⟨ k, l ⟩ ; simp [ Matrix.mul_apply, Matrix.kroneckerMap_apply ] ; ring_nf
+    simp only [mul_assoc, Finset.mul_sum _ _ _, Finset.sum_mul];
+    simp only [← Finset.sum_product'];
+    refine' Finset.sum_bij ( fun x _ => ( x.1.2, x.2.2, x.1.1, x.2.1 ) ) _ _ _ _ <;> simp;
     exact fun _ _ _ _ _ _ => Or.inl <| by ring;
-  · ext ⟨ i, j ⟩ ⟨ k, l ⟩ ; simp +decide [ Matrix.one_apply, Matrix.kronecker_apply ] ; aesop;
-  · have := hσ.det_pos.ne';
-    have := Matrix.nonsing_inv_mul _ ( show IsUnit ( σBC : Matrix ( dB × dC ) ( dB × dC ) ℂ ).det from isUnit_iff_ne_zero.mpr this ) ; aesop;
+  · ext ⟨ i, j ⟩ ⟨ k, l ⟩
+    simp [Matrix.one_apply]
+    aesop
+  · have := hσ.det_pos.ne'
+    have := Matrix.nonsing_inv_mul _ (isUnit_iff_ne_zero.mpr hσ.det_pos.ne')
+    aesop;
 
-/-
-PROBLEM
-Key factorization: W_mat = (F ⊗ I_C) * (I_A ⊗ G).reindex, where
+/- Key factorization: W_mat = (F ⊗ I_C) * (I_A ⊗ G).reindex, where
   F = ρAB.sqrt * (ρA⁻¹.sqrt ⊗ I_B) and G = (I_B ⊗ σC⁻¹.sqrt) * σBC.sqrt.
-  This expresses W as a "contraction over the shared B index".
-PROVIDED SOLUTION
-This is a matrix identity that can be verified entry-by-entry using `ext`.
-W_mat = (ρAB_sqrt ⊗ₖ σC_inv_sqrt) * (ρA_inv_sqrt ⊗ₖ σBC_sqrt).reindex(e,e) where e = assoc⁻¹.
-The RHS is: (F ⊗ₖ I_C) * (I_A ⊗ₖ G).reindex(e,e) where F = ρAB_sqrt * (ρA_inv_sqrt ⊗ I_B) and G = (I_B ⊗ σC_inv_sqrt) * σBC_sqrt.
-Expanding entry-by-entry:
-LHS at ((a,b),c),((a',b'),c'):
-= Σ_{(a'',b''),c''} (ρAB_sqrt ⊗ₖ σC_inv_sqrt)_{((a,b),c),((a'',b''),c'')} * (ρA_inv_sqrt ⊗ₖ σBC_sqrt).reindex_{((a'',b''),c''),((a',b'),c')}
-= Σ_{(a'',b''),c''} (ρAB_sqrt)_{(a,b),(a'',b'')} * (σC_inv_sqrt)_{c,c''} * (ρA_inv_sqrt)_{a'',a'} * (σBC_sqrt)_{(b'',c''),(b',c')}
-RHS at ((a,b),c),((a',b'),c'):
-= Σ_{((a'',b''),c'')} (F ⊗ₖ I_C)_{((a,b),c),((a'',b''),c'')} * ((I_A ⊗ₖ G).reindex)_{((a'',b''),c''),((a',b'),c')}
-= Σ_{(a'',b''),c''} F_{(a,b),(a'',b'')} * δ_{c,c''} * δ_{a'',a'} * G_{(b'',c''),(b',c')}
-Now F_{(a,b),(a'',b'')} = Σ_{(a''',b''')} (ρAB_sqrt)_{(a,b),(a''',b''')} * δ_{a''',a''} * δ_{b''',b''} * ... hmm no:
-F = ρAB_sqrt * (ρA_inv_sqrt ⊗ I_B), so F_{(a,b),(a'',b'')} = Σ_{(a''',b''')} (ρAB_sqrt)_{(a,b),(a''',b''')} * (ρA_inv_sqrt ⊗ I_B)_{(a''',b'''),(a'',b'')} = Σ_{a'''} (ρAB_sqrt)_{(a,b),(a''',b'')} * (ρA_inv_sqrt)_{a''',a''}
-And G_{(b'',c''),(b',c')} = Σ_{(b₃,c₃)} (I_B ⊗ σC_inv_sqrt)_{(b'',c''),(b₃,c₃)} * (σBC_sqrt)_{(b₃,c₃),(b',c')} = Σ_{c₃} δ_{b'',b₃} * (σC_inv_sqrt)_{c'',c₃} * (σBC_sqrt)_{(b'',c₃),(b',c')}
-= Σ_{c₃} (σC_inv_sqrt)_{c'',c₃} * (σBC_sqrt)_{(b'',c₃),(b',c')}
-So RHS = Σ_{b''} Σ_{a'''} (ρAB_sqrt)_{(a,b),(a''',b'')} * (ρA_inv_sqrt)_{a''',a'} * Σ_{c₃} (σC_inv_sqrt)_{c,c₃} * (σBC_sqrt)_{(b'',c₃),(b',c')}
-= Σ_{a''',b'',c₃} (ρAB_sqrt)_{(a,b),(a''',b'')} * (ρA_inv_sqrt)_{a''',a'} * (σC_inv_sqrt)_{c,c₃} * (σBC_sqrt)_{(b'',c₃),(b',c')}
-And LHS = Σ_{a'',b'',c''} (ρAB_sqrt)_{(a,b),(a'',b'')} * (σC_inv_sqrt)_{c,c''} * (ρA_inv_sqrt)_{a'',a'} * (σBC_sqrt)_{(b'',c''),(b',c')}
-Renaming a'' → a''', c'' → c₃: LHS = Σ_{a''',b'',c₃} (ρAB_sqrt)_{(a,b),(a''',b'')} * (σC_inv_sqrt)_{c,c₃} * (ρA_inv_sqrt)_{a''',a'} * (σBC_sqrt)_{(b'',c₃),(b',c')}
-This equals RHS! The sums are over the same indices and the factors are the same (just reordered by commutativity of multiplication in ℂ).
-So use `ext` and then simplify using simp with Matrix.mul_apply, Matrix.kroneckerMap, Matrix.reindex, Matrix.one_apply, and Finset.sum manipulation. The key is that the sums match after renaming dummy variables and using commutativity of complex multiplication.
--/
+  This expresses W as a "contraction over the shared B index". -/
 private lemma W_mat_eq_factored [Nonempty dA] [Nonempty dB] [Nonempty dC]
     (ρAB : HermitianMat (dA × dB) ℂ) (σBC : HermitianMat (dB × dC) ℂ) :
     W_mat ρAB σBC =
@@ -522,72 +466,38 @@ private lemma W_mat_eq_factored [Nonempty dA] [Nonempty dB] [Nonempty dC]
           (Equiv.prodAssoc dA dB dC).symm (Equiv.prodAssoc dA dB dC).symm := by
   -- By definition of matrix multiplication and the properties of the Kronecker product, we can expand both sides.
   ext ⟨⟨a, b⟩, c⟩ ⟨⟨a', b'⟩, c'⟩; simp [Matrix.mul_apply, Matrix.kroneckerMap, Matrix.one_apply, Matrix.reindex];
-  unfold W_mat; simp +decide [ Matrix.mul_apply, Matrix.kroneckerMap, Matrix.reindex ] ;
-  simp +decide [ Finset.sum_ite, Finset.mul_sum _ _ _, Finset.sum_mul, mul_assoc, mul_comm, mul_left_comm, Finset.sum_add_distrib ];
-  simp +decide [ Finset.sum_filter, Finset.sum_sigma' ];
+  unfold W_mat; simp [ Matrix.mul_apply, Matrix.kroneckerMap, Matrix.reindex ] ;
+  simp [ Finset.sum_ite, Finset.mul_sum _ _ _, Finset.sum_mul, mul_assoc, mul_comm, mul_left_comm];
+  simp [ Finset.sum_filter, Finset.sum_sigma' ];
   rw [ ← Finset.sum_filter ];
-  refine' Finset.sum_bij ( fun x _ => ⟨ ⟨ ⟨ a', x.1.2 ⟩, c ⟩, ⟨ ⟨ x.1.2, x.2 ⟩, x.1 ⟩ ⟩ ) _ _ _ _ <;> simp +decide;
+  refine' Finset.sum_bij ( fun x _ => ⟨ ⟨ ⟨ a', x.1.2 ⟩, c ⟩, ⟨ ⟨ x.1.2, x.2 ⟩, x.1 ⟩ ⟩ ) _ _ _ _ <;> simp;
   aesop
 
-/-
-PROBLEM
-Connection between F and V_rho via the MES:
-  (F ⊗ I_B) * MES = V_rho, where F = ρAB.sqrt * (ρA⁻¹.sqrt ⊗ I_B).
-PROVIDED SOLUTION
-This is a matrix identity verified entry-by-entry.
-LHS = (F ⊗ₖ I_B) * MES where F = ρAB.sqrt.mat * (ρAB.traceRight⁻¹.sqrt.mat ⊗ₖ 1) and MES = map_to_tensor_MES dA dB.
-MES has entries: MES_{((i,j),k),l} = if i = l ∧ j = k then 1 else 0.
-F is on dA×dB → dA×dB with:
-F_{(a,b),(a',b')} = Σ_{(a'',b'')} (ρAB.sqrt.mat)_{(a,b),(a'',b'')} * (ρAB.traceRight⁻¹.sqrt.mat)_{a'',a'} * δ_{b'',b'}
-= Σ_{a''} (ρAB.sqrt.mat)_{(a,b),(a'',b')} * (ρAB.traceRight⁻¹.sqrt.mat)_{a'',a'}
-(F ⊗ₖ I_B) has entries on ((dA×dB)×dB) → ((dA×dB)×dB):
-(F ⊗ₖ I_B)_{((a,b),b₂),((a',b'),b₂')} = F_{(a,b),(a',b')} * δ_{b₂,b₂'}
-((F ⊗ₖ I_B) * MES)_{((a,b),b₂),l} = Σ_{((a',b'),b₂')} (F ⊗ₖ I_B)_{((a,b),b₂),((a',b'),b₂')} * MES_{((a',b'),b₂'),l}
-= Σ_{a',b',b₂'} F_{(a,b),(a',b')} * δ_{b₂,b₂'} * (if a'=l ∧ b'=b₂' then 1 else 0)
-= Σ_{a'} F_{(a,b),(a',b₂)} * (if a'=l then 1 else 0) [using b'=b₂'=b₂]
-= F_{(a,b),(l,b₂)}
-= Σ_{a''} (ρAB.sqrt.mat)_{(a,b),(a'',b₂)} * (ρAB.traceRight⁻¹.sqrt.mat)_{a'',l}
-RHS = V_rho ρAB = (ρAB.sqrt.mat ⊗ₖ I_B) * MES * ρAB.traceRight⁻¹.sqrt.mat.
-V_rho_{((a,b),b₂),l} = ((ρAB.sqrt.mat ⊗ₖ I_B) * MES * ρAB.traceRight⁻¹.sqrt.mat)_{((a,b),b₂),l}
-First, (MES * ρA⁻¹.sqrt)_{((i,j),k),l} = Σ_m MES_{((i,j),k),m} * (ρA⁻¹.sqrt)_{m,l} = (ρA⁻¹.sqrt)_{i,l} * δ_{j,k}
-Then ((ρAB.sqrt ⊗ I_B) * (MES * ρA⁻¹.sqrt))_{((a,b),b₂),l}
-= Σ_{(a',b'),b₂'} (ρAB.sqrt ⊗ I_B)_{((a,b),b₂),((a',b'),b₂')} * (ρA⁻¹.sqrt)_{a',l} * δ_{b',b₂'}
-= Σ_{a',b'} (ρAB.sqrt)_{(a,b),(a',b')} * δ_{b₂,b'} * (ρA⁻¹.sqrt)_{a',l}  [using b₂' = b']
-Wait, (ρAB.sqrt ⊗ I_B)_{((a,b),b₂),((a',b'),b₂')} = (ρAB.sqrt)_{(a,b),(a',b')} * δ_{b₂,b₂'}, NOT δ_{b₂,b'}! The I_B acts on the B* index (b₂,b₂'), not the B index (b',b'').
-So = Σ_{a',b'} (ρAB.sqrt)_{(a,b),(a',b')} * δ_{b₂,b₂'} * (ρA⁻¹.sqrt)_{a',l} * δ_{b',b₂'} [from MES: δ_{b',b₂'}]
-= Σ_{a'} (ρAB.sqrt)_{(a,b),(a',b₂)} * (ρA⁻¹.sqrt)_{a',l}
-This equals the LHS! Both give Σ_{a'} (ρAB.sqrt)_{(a,b),(a',b₂)} * (ρA⁻¹.sqrt)_{a',l}.
-So use ext and simplify with simp lemmas for Matrix.mul_apply, map_to_tensor_MES, V_rho, Matrix.kroneckerMap, Matrix.one_apply, and Finset.sum simplification.
--/
+/- Connection between F and V_rho via the MES:
+(F ⊗ I_B) * MES = V_rho, where F = ρAB.sqrt * (ρA⁻¹.sqrt ⊗ I_B).-/
 private lemma F_tensor_MES_eq_V_rho
     (ρAB : HermitianMat (dA × dB) ℂ) :
     let F := ρAB.sqrt.mat * (ρAB.traceRight⁻¹.sqrt.mat ⊗ₖ (1 : Matrix dB dB ℂ))
     (F ⊗ₖ (1 : Matrix dB dB ℂ)) * map_to_tensor_MES dA dB = V_rho ρAB := by
-  -- By definition of F and the properties of the MES, we can expand both sides and show they are equal.
   ext ⟨i, j⟩ k; simp [Matrix.mul_apply, Matrix.kroneckerMap_apply, map_to_tensor_MES];
-  unfold V_rho; simp +decide [ Matrix.mul_apply, Matrix.kroneckerMap_apply, map_to_tensor_MES ] ;
-  simp +decide [ Finset.sum_ite, Matrix.one_apply, mul_assoc, mul_comm, mul_left_comm, Finset.mul_sum _ _ _ ];
-  rw [ Finset.sum_sigma' ] ; simp +decide [ eq_comm, Finset.filter_filter ] ;
-  refine' Finset.sum_bij ( fun x _ => ⟨ ⟨ ⟨ k, j ⟩, j ⟩, x, j ⟩ ) _ _ _ _ <;> simp +decide [ eq_comm ];
+  unfold V_rho; simp [ Matrix.mul_apply, Matrix.kroneckerMap_apply, map_to_tensor_MES ] ;
+  simp [ Finset.sum_ite, Matrix.one_apply, mul_comm, Finset.mul_sum]
+  rw [ Finset.sum_sigma' ] ; simp [ eq_comm, Finset.filter_filter ] ;
+  refine' Finset.sum_bij ( fun x _ => ⟨ ⟨ ⟨ k, j ⟩, j ⟩, x, j ⟩ ) _ _ _ _ <;> simp [ eq_comm ];
   · aesop ( simp_config := { singlePass := true } ) ;
   · intro a; rw [ Finset.sum_eq_single ⟨ ( a, j ), j ⟩ ] <;> aesop;
 
-/-- **Step 3 (Core inequality)**: W†W ≤ I.
-  This is the key step, following from the isometry argument:
-  V_rho ⊗ I_C and I_A ⊗ V_sigma are isometries, their cross product has norm ≤ 1,
-  and the result can be related to W_mat through the MES computation (Eq. 6 in Lin-Kim-Hsieh). -/
+/-- Core inequality: W†W ≤ I.
+This is the key step, following from the isometry argument:
+V_rho ⊗ I_C and I_A ⊗ V_sigma are isometries, their cross product has norm ≤ 1,
+and the result can be related to W_mat through the MES computation (Eq. 6 in Lin-Kim-Hsieh). -/
 private lemma W_mat_sq_le_one [Nonempty dA] [Nonempty dB] [Nonempty dC]
     (ρAB : HermitianMat (dA × dB) ℂ) (σBC : HermitianMat (dB × dC) ℂ)
     (hρ : ρAB.mat.PosDef) (hσ : σBC.mat.PosDef) :
     (W_mat ρAB σBC)ᴴ * (W_mat ρAB σBC) ≤ 1 := by
   sorry
 
-/-
-PROBLEM
-**Step 4**: S_mat is invertible (since ρ_A and σ_BC are positive definite).
-PROVIDED SOLUTION
-S_mat is a reindexed Kronecker product of two invertible matrices: ρA⁻¹.sqrt (positive definite, hence invertible) and σBC.sqrt (positive definite, hence invertible). The Kronecker product of invertible matrices is invertible, and reindexing preserves invertibility. Use Matrix.IsUnit_det_ne_zero or similar. S_mat = (ρAB.traceRight⁻¹.sqrt.mat ⊗ₖ σBC.sqrt.mat).reindex e e. Since ρAB is PosDef, ρAB.traceRight is PosDef (by PosDef_traceRight), hence ρAB.traceRight⁻¹ is PosDef, hence ρAB.traceRight⁻¹.sqrt is PosDef (by sqrt_posDef). Similarly σBC.sqrt is PosDef. The determinant of a Kronecker product is det(A)^n * det(B)^m (for m×m and n×n matrices). A positive definite matrix has positive determinant, hence nonzero determinant. Therefore the Kronecker product has nonzero determinant. Reindexing preserves the determinant (up to sign). So IsUnit follows.
--/
+/- S_mat is invertible (since ρ_A and σ_BC are positive definite). -/
 private lemma S_mat_isUnit [Nonempty dA] [Nonempty dB] [Nonempty dC]
     (ρAB : HermitianMat (dA × dB) ℂ) (σBC : HermitianMat (dB × dC) ℂ)
     (hρ : ρAB.mat.PosDef) (hσ : σBC.mat.PosDef) :
@@ -599,14 +509,14 @@ private lemma S_mat_isUnit [Nonempty dA] [Nonempty dB] [Nonempty dC]
     · have h_det_ne_zero : ∀ (A : HermitianMat (dA) ℂ), A.mat.PosDef → (A.sqrt).mat.det ≠ 0 := by
         intro A hA
         have h_det_ne_zero : (A.sqrt).mat.PosDef := by
-          exact?;
+          exact sqrt_posDef hA;
         exact h_det_ne_zero.det_pos.ne';
       exact isUnit_iff_ne_zero.mpr ( h_det_ne_zero _ <| by simpa using PosDef_traceRight _ hρ |> fun h => h.inv );
     · have h_inv_sqrt : σBC.sqrt.mat.PosDef := by
-        exact?;
+        exact sqrt_posDef hσ;
       exact isUnit_iff_ne_zero.mpr h_inv_sqrt.det_pos.ne';
   unfold S_mat;
-  simp_all +decide [ Matrix.det_kronecker, Matrix.det_reindex_self ]
+  simp_all [ Matrix.det_kronecker]
 
 /-- The intermediate operator inequality: ρ_AB ⊗ σ_C⁻¹ ≤ (ρ_A ⊗ σ_BC⁻¹).reindex(assoc⁻¹).
   This is derived from W_mat_sq_le_one by algebraic manipulation (conjugation and simplification). -/
@@ -621,18 +531,18 @@ theorem intermediate_ineq [Nonempty dA] [Nonempty dB] [Nonempty dC]
   convert h_sorted using 1;
   rw [HermitianMat.le_iff];
   rw [ ← S_mat_conj_rhs_eq_one ρAB σBC hρ hσ ];
-  constructor <;> intro h <;> simp_all +decide [ Matrix.PosSemidef ];
+  constructor <;> intro h <;> simp_all [ Matrix.PosSemidef ];
   · convert h_sorted using 1;
     convert S_mat_conj_rhs_eq_one ρAB σBC hρ hσ using 1;
   · have := S_mat_isUnit ρAB σBC hρ hσ;
     cases' this.nonempty_invertible with u hu;
     have h_pos_semidef : Matrix.PosSemidef ((S_mat ρAB σBC)⁻¹ * (S_mat ρAB σBC * ((ρAB.traceRight ⊗ₖ σBC⁻¹).reindex (Equiv.prodAssoc dA dB dC).symm).mat * S_mat ρAB σBC - S_mat ρAB σBC * (ρAB ⊗ₖ (σBC.traceLeft)⁻¹).mat * S_mat ρAB σBC) * (S_mat ρAB σBC)⁻¹ᴴ) := by
-      exact?;
-    simp_all +decide [ Matrix.mul_assoc, Matrix.sub_mul, Matrix.mul_sub ];
-    simp_all +decide [ Matrix.PosSemidef, Matrix.IsHermitian ];
+      exact Matrix.PosSemidef.mul_mul_conjTranspose_same h (S_mat ρAB σBC)⁻¹;
+    simp_all [ Matrix.mul_assoc, Matrix.sub_mul, Matrix.mul_sub ];
+    simp_all [ Matrix.PosSemidef, Matrix.IsHermitian ];
     have h_conj : (S_mat ρAB σBC)ᴴ = S_mat ρAB σBC := by
-      unfold S_mat; simp +decide [ Matrix.conjTranspose_kronecker, Matrix.conjTranspose_submatrix ] ;
-    simp_all +decide [ Matrix.mul_assoc, Matrix.mul_inv_rev, Matrix.mul_one, Matrix.one_mul, Matrix.conjTranspose_nonsing_inv ]
+      unfold S_mat; simp [ Matrix.conjTranspose_kronecker, Matrix.conjTranspose_submatrix ] ;
+    simp_all [  Matrix.conjTranspose_nonsing_inv ]
 
 open HermitianMat in
 /-- **Operator extension of SSA** (Main result of Lin-Kim-Hsieh).
@@ -699,14 +609,6 @@ open scoped InnerProductSpace RealInnerProductSpace
 
 /-! ### Weak monotonicity and SSA proof infrastructure -/
 section SSA_proof
-
-set_option maxHeartbeats 800000
-
-variable {d₁ d₂ d₃ : Type*}
-
-variable [Fintype d₁] [Fintype d₂] [Fintype d₃]
-
-variable [DecidableEq d₁] [DecidableEq d₂] [DecidableEq d₃]
 
 omit [DecidableEq d₁] in
 open HermitianMat in
@@ -954,18 +856,7 @@ private def perm_AB_CR' (dA dB dC : Type*) :
   left_inv := by intro x; simp
   right_inv := by intro x; simp
 
-/-
-PROBLEM
-The CR-marginal of ρBCR equals the traceLeft of the AB|CR-relabeled purification.
-PROVIDED SOLUTION
-Both sides are MStates, so use MState.ext to reduce to equality of HermitianMat, then ext to reduce to matrix entries.
-The LHS: (ρBCR ρ).traceLeft
-= ((MState.pure ρ.purify).relabel (perm_A_BCR' dA dB dC).symm).traceLeft.traceLeft
-(since ρBCR = the traceLeft of the relabeled pure state, and then traceLeft again traces out B)
-The RHS: ((MState.pure ρ.purify).relabel (perm_AB_CR' dA dB dC).symm).traceLeft
-Both trace out {A, B} from the pure state |ψ⟩⟨ψ|, just via different relabelings. The result is the same state on C × R.
-Unfold ρBCR, MState.traceLeft, MState.relabel, perm_A_BCR', perm_AB_CR'. Then compare matrix entries using ext. The key is showing that summing over (dA, dB) gives the same result regardless of the order of the relabeling.
--/
+/- The CR-marginal of ρBCR equals the traceLeft of the AB|CR-relabeled purification. -/
 private lemma BCR_traceLeft_eq_purify_traceLeft (ρ : MState (dA × dB × dC)) :
     (ρBCR ρ).traceLeft =
     ((MState.pure ρ.purify).relabel (perm_AB_CR' dA dB dC).symm).traceLeft := by
@@ -985,19 +876,7 @@ private lemma BCR_traceLeft_eq_purify_traceLeft (ρ : MState (dA × dB × dC)) :
     exact Finset.sum_bij ( fun x _ => ( x.2, x.1 ) ) ( by simp ) ( by simp ) ( by simp ) ( by simp );
   · rfl
 
-/-
-PROBLEM
-The traceRight of the AB|CR-relabeled purification has same entropy as ρ.assoc'.traceRight.
-PROVIDED SOLUTION
-The traceRight of (MState.pure ρ.purify).relabel (perm_AB_CR' dA dB dC).symm is a state on dA × dB. This traces out the C×R part from the relabeled pure state, which is the same as tracing out C and R from the original pure state.
-Since (MState.pure ρ.purify).traceRight = ρ (by purify_spec), tracing C from ρ gives ρ.assoc'.traceRight. But the relabeled traceRight traces out {C, R}, not just {R}.
-More precisely: the pure state is on (dA × dB × dC) × R. Relabeled by perm_AB_CR', it's on (dA × dB) × (dC × R). traceRight gives state on dA × dB, which is Tr_{C,R}(|ψ⟩⟨ψ|).
-This equals Tr_C(Tr_R(|ψ⟩⟨ψ|)) = Tr_C(ρ) = ρ.assoc'.traceRight.
-So they have equal Sᵥₙ. The entropy equality follows.
-Show the matrices are equal by ext. Use purify_spec: (MState.pure ρ.purify).traceRight = ρ. Then tracing C from ρ: ρ.assoc'.traceRight.
-Unfold definitions and show that Tr_{C×R}(|ψ⟩⟨ψ|_{relabeled}) = Tr_C(Tr_R(|ψ⟩⟨ψ|)) = Tr_C(ρ).
-For the entropy, use Sᵥₙ_relabel or direct matrix equality + congr.
--/
+/- The traceRight of the AB|CR-relabeled purification has same entropy as ρ.assoc'.traceRight. -/
 private lemma purify_AB_traceRight_eq (ρ : MState (dA × dB × dC)) :
     Sᵥₙ ((MState.pure ρ.purify).relabel (perm_AB_CR' dA dB dC).symm).traceRight =
     Sᵥₙ ρ.assoc'.traceRight := by
@@ -1064,16 +943,8 @@ theorem Sᵥₙ_strong_subadditivity (ρ₁₂₃ : MState (d₁ × d₂ × d₃
     let ρ₂₃ := ρ₁₂₃.traceLeft;
     let ρ₂ := ρ₁₂₃.traceLeft.traceRight;
     Sᵥₙ ρ₁₂₃ + Sᵥₙ ρ₂ ≤ Sᵥₙ ρ₁₂ + Sᵥₙ ρ₂₃ := by
-  -- Derive Nonempty instances from the existence of ρ₁₂₃
-  haveI : Nonempty (d₁ × d₂ × d₃) := by
-    by_contra h; rw [not_nonempty_iff] at h
-    exact absurd ρ₁₂₃.tr (by simp [HermitianMat.trace, Matrix.trace])
-  haveI : Nonempty d₁ := (nonempty_prod.mp ‹_›).1
-  haveI : Nonempty (d₂ × d₃) := (nonempty_prod.mp ‹Nonempty (d₁ × d₂ × d₃)›).2
-  haveI : Nonempty d₂ := (nonempty_prod.mp ‹_›).1
-  haveI : Nonempty d₃ := (nonempty_prod.mp ‹Nonempty (d₂ × d₃)›).2
+  have _ := ρ₁₂₃.nonempty |> nonempty_prod.mp |>.right |> nonempty_prod.mp |>.right
   -- Apply weak monotonicity to ρBCR, then substitute purification identities
-  intro ρ₁₂ ρ₂₃ ρ₂
   have h_wm := Sᵥₙ_wm (ρBCR ρ₁₂₃)
   rw [S_BC_of_BCR_eq, S_CR_of_BCR_eq, S_B_of_BCR_eq, S_R_of_BCR_eq] at h_wm
   linarith
