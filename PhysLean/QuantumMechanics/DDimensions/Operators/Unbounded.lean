@@ -305,6 +305,16 @@ lemma smul_isClosable_of_isClosable {E F : Type*} [NormedAddCommGroup E] [InnerP
 noncomputable instance : SMul ℂ (UnboundedOperator H H') where
   smul c U := ⟨c • U.toLinearPMap, U.dense_domain, smul_isClosable_of_isClosable U.is_closable c⟩
 
+@[simp]
+lemma smul_domain (c : ℂ) (U : UnboundedOperator H H') : (c • U).domain = U.domain := rfl
+
+@[simp]
+lemma smul_toLinearPMap (c : ℂ) (U : UnboundedOperator H H') :
+    (c • U).toLinearPMap = c • U.toLinearPMap :=
+  rfl
+
+lemma zero_smul_le_zero (U : UnboundedOperator H H') : (0 : ℂ) • U ≤ 0 := ⟨by simp, by simp⟩
+
 end
 
 /-!
