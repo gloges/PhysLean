@@ -268,6 +268,43 @@ lemma add_assoc {U₁ U₂ U₃ : UnboundedOperator H H'}
     have hD₂₃' : ¬Dense (U₁.domain ⊓ (U₂ + U₃).domain : Set H) := add_domain_of_dense hD₂₃ ▸ hD'
     rw [add_toLinearPMap_of_not_dense hD₁₂', add_toLinearPMap_of_not_dense hD₂₃']
 
+/-!
+### C.4. Smul
+-/
+
+noncomputable instance : SMul ℕ (UnboundedOperator H H') := ⟨nsmulRec⟩
+
+lemma smul_mem_graph_of_mem_smul_graph {E F : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+    [NormedAddCommGroup F] [InnerProductSpace ℂ F] {f : LinearPMap ℂ E F} {c : ℂ} (hc : c ≠ 0)
+    {x : E × F} (h : x ∈ (c • f).graph.topologicalClosure) :
+    (x.1, c⁻¹ • x.2) ∈ f.graph.topologicalClosure := by
+  have {y : f.domain} {z : F} : c • f y = z ↔ f y = c⁻¹ • z := by
+    trans c • f y = c • c⁻¹ • z
+    · simp [smul_smul, hc]
+    exact smul_right_inj hc
+  obtain ⟨b, hb, hb'⟩ := mem_closure_iff_seq_limit.mp h
+  apply mem_closure_iff_seq_limit.mpr
+  use fun n ↦ ((b n).1, c⁻¹ • (b n).2)
+  rw [nhds_prod_eq, Filter.tendsto_prod_iff'] at *
+  refine ⟨by simp_all, ⟨hb'.1, ?_⟩⟩
+  rw [nhds_smul₀ (inv_ne_zero hc), ← Pi.smul_def, Filter.smul_tendsto_smul_iff₀ (inv_ne_zero hc)]
+  exact hb'.2
+
+lemma smul_isClosable_of_isClosable {E F : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+    [NormedAddCommGroup F] [InnerProductSpace ℂ F] {f : LinearPMap ℂ E F} (hf : f.IsClosable)
+    (c : ℂ) : (c • f).IsClosable := by
+  rcases eq_zero_or_neZero c with (rfl | hc)
+  · exact isClosable_of_zero (by simp)
+  · use (c • f).graph.topologicalClosure.toLinearPMap
+    refine Eq.symm <| toLinearPMap_graph_eq _ (fun x hx hx1 ↦ ?_)
+    suffices c⁻¹ • x.2 = 0 by aesop
+    have hx := smul_mem_graph_of_mem_smul_graph (NeZero.ne c) hx
+    rw [IsClosable.graph_closure_eq_closure_graph hf, hx1] at hx
+    exact graph_fst_eq_zero_snd f.closure hx rfl
+
+noncomputable instance : SMul ℂ (UnboundedOperator H H') where
+  smul c U := ⟨c • U.toLinearPMap, U.dense_domain, smul_isClosable_of_isClosable U.is_closable c⟩
+
 end
 
 /-!
