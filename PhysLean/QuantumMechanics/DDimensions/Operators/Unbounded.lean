@@ -315,6 +315,46 @@ lemma smul_toLinearPMap (c : ℂ) (U : UnboundedOperator H H') :
 
 lemma zero_smul_le_zero (U : UnboundedOperator H H') : (0 : ℂ) • U ≤ 0 := ⟨by simp, by simp⟩
 
+noncomputable instance : DistribSMul ℂ (UnboundedOperator H H') where
+  smul_zero _ := ext <| by ext <;> simp
+  smul_add c U₁ U₂ := by
+    apply UnboundedOperator.ext
+    by_cases hD : Dense (U₁.domain ⊓ U₂.domain : Set H)
+    · have hD' : Dense ((c • U₁).domain ⊓ (c • U₂).domain : Set H) := by grind
+      by_cases hC : (U₁.1 + U₂.1).IsClosable
+      · -- No junk values: smul distributes as it does for `LinearPMap`
+        have h : c • (U₁.1 + U₂.1) = c • U₁.1 + c • U₂.1 := by
+          ext
+          · simp [LinearPMap.add_domain]
+          · simp [LinearPMap.add_apply]
+        have hC' : ((c • U₁).1 + (c • U₂).1).IsClosable := by
+          simp [← h, smul_isClosable_of_isClosable hC]
+        simp only [h, smul_toLinearPMap, add_toLinearPMap_of_dense_closable hD hC,
+          add_toLinearPMap_of_dense_closable hD' hC']
+      · -- `D(U₁) ∩ D(U₂)` is dense and `U₁ + U₂` is not closable:
+        -- both sides are the zero operator on `D(U₁) ∩ D(U₂)`.
+        -- is actually closable: this is the reason for the *two* junk values used to define
+        -- addition for unbounded operators.
+        rw [smul_toLinearPMap, add_toLinearPMap_of_dense_not_closable hD hC]
+        rcases eq_zero_or_neZero c with (rfl | hc)
+        · have hC' : (((0 : ℂ) • U₁).1 + ((0 : ℂ) • U₂).1).IsClosable :=
+            isClosable_of_zero (by ext; simp [LinearPMap.add_apply])
+          rw [add_toLinearPMap_of_dense_closable hD' hC']
+          ext
+          · simp [LinearPMap.add_domain]
+          · simp [LinearPMap.add_apply]
+        · have h : U₁.1 + U₂.1 = c⁻¹ • (c • U₁.1 + c • U₂.1) := by
+            ext
+            · simp [LinearPMap.add_domain]
+            · simp [LinearPMap.add_apply, smul_smul, inv_mul_cancel₀ (NeZero.ne c)]
+          have hC' := fun h' ↦ hC (h ▸ smul_isClosable_of_isClosable h' c⁻¹)
+          rw [add_toLinearPMap_of_dense_not_closable hD' hC']
+          ext <;> simp
+    · -- `D(U₁) ∩ D(U₂)` is not dense: both sides are the junk zero operator with domain `⊤`
+      have hD' : ¬Dense ((c • U₁).domain ⊓ (c • U₂).domain : Set H) := by grind
+      rw [smul_toLinearPMap, add_toLinearPMap_of_not_dense hD, add_toLinearPMap_of_not_dense hD']
+      ext <;> simp
+
 end
 
 /-!
