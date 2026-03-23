@@ -278,17 +278,15 @@ lemma smul_mem_graph_of_mem_smul_graph {E F : Type*} [NormedAddCommGroup E] [Inn
     [NormedAddCommGroup F] [InnerProductSpace ℂ F] {f : LinearPMap ℂ E F} {c : ℂ} (hc : c ≠ 0)
     {x : E × F} (h : x ∈ (c • f).graph.topologicalClosure) :
     (x.1, c⁻¹ • x.2) ∈ f.graph.topologicalClosure := by
-  have {y : f.domain} {z : F} : c • f y = z ↔ f y = c⁻¹ • z := by
-    trans c • f y = c • c⁻¹ • z
-    · simp [smul_smul, hc]
-    exact smul_right_inj hc
   obtain ⟨b, hb, hb'⟩ := mem_closure_iff_seq_limit.mp h
   apply mem_closure_iff_seq_limit.mpr
   use fun n ↦ ((b n).1, c⁻¹ • (b n).2)
   rw [nhds_prod_eq, Filter.tendsto_prod_iff'] at *
-  refine ⟨by simp_all, ⟨hb'.1, ?_⟩⟩
-  rw [nhds_smul₀ (inv_ne_zero hc), ← Pi.smul_def, Filter.smul_tendsto_smul_iff₀ (inv_ne_zero hc)]
-  exact hb'.2
+  refine ⟨?_, ⟨hb'.1, ?_⟩⟩
+  · have {y : f.domain} {z : F} : c • f y = z ↔ f y = c⁻¹ • z := by aesop
+    simp_all
+  · rw [nhds_smul₀ (inv_ne_zero hc), ← Pi.smul_def, Filter.smul_tendsto_smul_iff₀ (inv_ne_zero hc)]
+    exact hb'.2
 
 lemma smul_isClosable_of_isClosable {E F : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
     [NormedAddCommGroup F] [InnerProductSpace ℂ F] {f : LinearPMap ℂ E F} (hf : f.IsClosable)
@@ -306,10 +304,10 @@ noncomputable instance : SMul ℂ (UnboundedOperator H H') where
   smul c U := ⟨c • U.toLinearPMap, U.dense_domain, smul_isClosable_of_isClosable U.is_closable c⟩
 
 @[simp]
-lemma smul_domain (c : ℂ) (U : UnboundedOperator H H') : (c • U).domain = U.domain := rfl
+lemma smul_domain (U : UnboundedOperator H H') (c : ℂ) : (c • U).domain = U.domain := rfl
 
 @[simp]
-lemma smul_toLinearPMap (c : ℂ) (U : UnboundedOperator H H') :
+lemma smul_toLinearPMap (U : UnboundedOperator H H') (c : ℂ) :
     (c • U).toLinearPMap = c • U.toLinearPMap :=
   rfl
 
@@ -333,8 +331,7 @@ noncomputable instance : DistribSMul ℂ (UnboundedOperator H H') where
           add_toLinearPMap_of_dense_closable hD' hC']
       · -- `D(U₁) ∩ D(U₂)` is dense and `U₁ + U₂` is not closable:
         -- both sides are the zero operator on `D(U₁) ∩ D(U₂)`.
-        -- is actually closable: this is the reason for the *two* junk values used to define
-        -- addition for unbounded operators.
+        -- `c = 0` must be treated separately because in this case the RHS side *is* closable.
         rw [smul_toLinearPMap, add_toLinearPMap_of_dense_not_closable hD hC]
         rcases eq_zero_or_neZero c with (rfl | hc)
         · have hC' : (((0 : ℂ) • U₁).1 + ((0 : ℂ) • U₂).1).IsClosable :=
