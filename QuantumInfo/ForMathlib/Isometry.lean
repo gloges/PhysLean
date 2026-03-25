@@ -151,9 +151,9 @@ theorem Matrix.IsHermitian.eigenvalue_ext (hA : A.IsHermitian)
     -- By linearity of A and B, we can distribute them over the sum.
     intros v
     obtain ⟨c, lam, hv, hlam⟩ := h_diag v
-    have hAv : A *ᵥ v = ∑ i, c i • lam i • (hA.eigenvectorBasis i) := by
+    have hA : A *ᵥ v = ∑ i, c i • lam i • (hA.eigenvectorBasis i) := by
       -- By linearity of matrix multiplication, we can distribute A over the sum.
-      have hAv : A *ᵥ (∑ i, c i • (hA.eigenvectorBasis i)) = ∑ i, c i • A *ᵥ (hA.eigenvectorBasis i) := by
+      have hA : A *ᵥ (∑ i, c i • (hA.eigenvectorBasis i)) = ∑ i, c i • A *ᵥ (hA.eigenvectorBasis i) := by
         simp [funext_iff]
         simp [Matrix.mulVec, dotProduct, Finset.mul_sum _ _ _]
         exact fun _ => Finset.sum_comm.trans ( Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => by ring );
@@ -170,7 +170,7 @@ theorem Matrix.IsHermitian.eigenvalue_ext (hA : A.IsHermitian)
       refine hBv.trans ?_
       conv => enter [1, 2, i]; rw [h _ _ ( hlam i )]
       simp only [WithLp.ofLp_sum, WithLp.ofLp_smul]
-    rw [hAv, hBv]
+    rw [hA, hBv]
   -- By the definition of matrix equality, if $A * v = B * v$ for all $v$, then $A = B$.
   apply Matrix.ext; intro i j; exact (by
   simpa using congr_fun ( h_diag ( Pi.single j 1 ) ) i)

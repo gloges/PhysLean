@@ -76,7 +76,7 @@ def qConditionalEnt (ρ : MState (dA × dB)) : ℝ :=
 def qMutualInfo (ρ : MState (dA × dB)) : ℝ :=
   Sᵥₙ ρ.traceLeft + Sᵥₙ ρ.traceRight - Sᵥₙ ρ
 
-/-- The Coherent Information of a state ρ pasing through a channel Λ is the negative conditional
+/-- The Coherent Information of a state ρ passing through a channel Λ is the negative conditional
   entropy of the image under Λ of the purification of ρ. -/
 def coherentInfo (ρ : MState d₁) (Λ : CPTPMap d₁ d₂) : ℝ :=
   let ρPure : MState (d₁ × d₁) := MState.pure ρ.purify

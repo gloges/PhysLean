@@ -280,7 +280,7 @@ def spectrum (ρ : MState d) : ProbDistribution d :=
     (ρ.psd.eigenvalues_nonneg ·)
     (by rw [sum_eigenvalues_eq_trace, ρ.tr])
 
-/-- The specturm of a pure state is (1,0,0,...), i.e. a constant distribution. -/
+/-- The spectrum of a pure state is (1,0,0,...), i.e. a constant distribution. -/
 theorem spectrum_pure_eq_constant :
     ∃ i, (pure ψ).spectrum = ProbDistribution.constant i := by
   let ρ := pure ψ
@@ -345,7 +345,7 @@ theorem spectrum_pure_eq_constant :
   use i
   exact ProbDistribution.constant_of_exists_one hi
 
-/-- If the specturm of a mixed state is (1,0,0...) i.e. a constant distribution, it is
+/-- If the spectrum of a mixed state is (1,0,0...) i.e. a constant distribution, it is
  a pure state. -/
 theorem pure_of_constant_spectrum (h : ∃ i, ρ.spectrum = ProbDistribution.constant i) :
     ∃ ψ, ρ = pure ψ := by

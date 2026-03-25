@@ -1158,7 +1158,7 @@ lemma IsHermitian.spectrum_eq_image_eigenvalues [Fintype n] {A : Matrix n n ℂ}
   simpa using hA.spectrum_real_eq_range_eigenvalues
 
 /- This lemma looks "wrong" in the sense that it's specifically about `Fintype.card foo = Finset.card bar`,
-why not just use the underyling fact `foo = ↑bar`? It turns out this actually gives annoying issues
+why not just use the underlying fact `foo = ↑bar`? It turns out this actually gives annoying issues
 with dependent rewrites, given the necessary `Fintype` instance. Using the above theorem for example,
 trying `rw [hA.spectrum_eq_image_eigenvalues]` fails because of dependent types. -/
 lemma IsHermitian.card_spectrum_eq_image [Fintype n] {A : Matrix n n ℂ} (hA : A.IsHermitian)

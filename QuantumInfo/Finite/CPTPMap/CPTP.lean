@@ -23,7 +23,7 @@ This file also defines several important examples of, classes of, and operations
  * `replacement`: The replacement channel that always outputs the same state
  * `prod`: Tensor product of two CPTP maps, with notation M₁ ⊗ M₂
  * `piProd`: Tensor product of finitely many CPTP maps (Pi-type product)
- * `of_unitary`: The CPTP map corresponding to a unitary opeation `U`
+ * `of_unitary`: The CPTP map corresponding to a unitary operation `U`
  * `IsUnitary`: Predicate whether the map corresponds to any unitary
  * `purify`: Purifying a channel into a unitary on a larger Hilbert space
  * `complementary`: The complementary channel to its purification

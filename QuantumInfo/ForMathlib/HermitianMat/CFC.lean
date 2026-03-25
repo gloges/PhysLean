@@ -340,7 +340,7 @@ theorem spectrum_subset_of_mem_Icc (A B : HermitianMat d 𝕜) :
 --   refine ⟨δ, ?_, ?_⟩
 --   · --This whole block should just be `positivity`. TODO fix.
 --     dsimp [δ]
---     --Why doesn't just `classical` make ths happen automatically?
+--     --Why doesn't just `classical` make this happen automatically?
 --     replace h_fin := Fintype.ofFinite (spectrum ℝ x.toMat)
 --     rw [← Finset.sup'_univ_eq_ciSup, gt_iff_lt, Finset.lt_sup'_iff]
 --     simp [hfc₀]

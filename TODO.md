@@ -6,7 +6,7 @@ Each of the items below is an item in Mark Wilde's book, "Quantum Information Th
  * 😂 - This didn't need to be proved, because it was just the definition (or something similar).
  * 🤔 - This is not a fact in the book but something related that would be nice to have (and we don't have yet).
 
-There's very little from Chapters 2 or 3 to include right now. Chapter 2 is an intuitive (and less rigorous) overview of classical coding theory. Chapter 3 is a lot of practice of qubit computations, and we haven't worked the special case fo qubits yet much.
+There's very little from Chapters 2 or 3 to include right now. Chapter 2 is an intuitive (and less rigorous) overview of classical coding theory. Chapter 3 is a lot of practice of qubit computations, and we haven't worked the special case of qubits yet much.
 
 # Chapter 2 - Classical Shannon Theory
 Exercise 2.1.1: The entropy of a uniform variable is `log |X|`, where `|X|` is the size of the variable's alphabet.
@@ -25,7 +25,7 @@ Bras, Kets
 Exercise 3.2.1: Determine the Bloch sphere angles for the states ∣-〉and ∣+〉.
 ❓ Eventually we'll define qubits, basic states like these, and the Bloch sphere, and can add lemmas for these.
 
-Excercise 3.3.1: A linear operator unitary iff it is norm-preserving.
+Exercise 3.3.1: A linear operator unitary iff it is norm-preserving.
 ❓ This is stated for linear operators as `unitary.linearIsometryEquiv`, and the "only if" is more explicitly as `unitary.norm_map`. Would be good to have for `Matrix.unitaryGroup`.
 
 _There's a whole bunch about Pauli matrices. We haven't specialized to qubits yet, so these are all ❓._
@@ -40,7 +40,7 @@ Exercise 3.3.8: Hadamard is its own inverse.
 Exercise 3.3.9: A particular exercise in changing bases; this is 🤷.
 Exercise 3.3.10: HXH = Z and HZH=X. _Sure, if we make simp lemmas for Clifford products this can be in there._
 
-Definition 3.3.1: Function of a Hermitian operator (by a function on its spectrum). 
+Definition 3.3.1: Function of a Hermitian operator (by a function on its spectrum).
 ❓ This we definitely would like, currently they're all ad-hoc.
 
 Exercise 3.3.11: Explicit forms for rotation operators.
@@ -62,7 +62,7 @@ Uncertainty principle
 ❓ Could do the state-dependent version given in the book. The averaged-case expectation value one comes as a result. But this would require defining + working with the Haar measure over kets.
 
 Exercise 3.4.4, 3.4.5: Longish story about uncertainty princple.
-🤷 Won't prove the thing asked, it's a very specific thing. 
+🤷 Won't prove the thing asked, it's a very specific thing.
 
 Exercise 3.5.1: This is askings for products of operators on qubits as tensor products.
 😂 This is precisely how we define it to start with.
