@@ -95,8 +95,8 @@ lemma integrableOn_norm_rpow_ball_compl_iff {d : ℕ} (hd : 0 < d) {a : ℝ} (ha
   let g : ℝ → ℝ := (Set.Ici a).indicator (fun r ↦ r ^ p)
   have hfg : f = fun x ↦ ‖g ‖x‖‖ₑ := by ext x; by_cases ‖x‖ ∈ Set.Ici a <;> simp_all [f, g]
   trans Integrable (fun x : Space d ↦ g ‖x‖)
-  · apply and_congr
-    · apply iff_of_true
+  · refine and_congr ?_ ?_
+    · refine iff_of_true ?_ ?_
       repeat exact StronglyMeasurable.aestronglyMeasurable (by measurability)
     · dsimp [HasFiniteIntegral]
       rw [← lintegral_indicator (by measurability), lintegral_congr_ae hfg.eventuallyEq]
