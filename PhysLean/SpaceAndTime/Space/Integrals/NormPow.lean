@@ -88,8 +88,8 @@ lemma integrableOn_norm_rpow_ball_iff {d : ℕ} (hd : 0 < d) {b : ℝ} (hb : 0 <
   ring_nf
 
 /-- The function `x ↦ ‖x‖ᵖ` is integrable on `{x : Space d | 0 < a ≤ ‖x‖}` iff `d + p < 0`. -/
-lemma integrableOn_norm_rpow_ball_compl_iff {d : ℕ} (hd : 0 < d) {a : ℝ} (ha : 0 < a)
-    (p : ℝ) : IntegrableOn (fun x : Space d ↦ ‖x‖ ^ p) (Metric.ball 0 a)ᶜ ↔ d + p < 0 := by
+lemma integrableOn_norm_rpow_ball_compl_iff {d : ℕ} (hd : 0 < d) {a : ℝ} (ha : 0 < a) (p : ℝ) :
+    IntegrableOn (fun x : Space d ↦ ‖x‖ ^ p) (Metric.ball 0 a)ᶜ ↔ d + p < 0 := by
   have : Nontrivial (Space d) := (Nat.succ_pred_eq_of_pos hd) ▸ Space.instNontrivialSucc
   let f : Space d → ENNReal := (Metric.ball 0 a)ᶜ.indicator (fun x ↦ ‖‖x‖ ^ p‖ₑ)
   let g : ℝ → ℝ := (Set.Ici a).indicator (fun r ↦ r ^ p)
@@ -109,7 +109,7 @@ lemma integrableOn_norm_rpow_ball_compl_iff {d : ℕ} (hd : 0 < d) {a : ℝ} (ha
   ring_nf
 
 /-- The function `x ↦ ‖x‖ᵖ` is integrable on the shell `{x : Space d | 0 < a ≤ ‖x‖ ∧ ‖x‖ < b}`. -/
-lemma integrableOn_norm_rpow_shell {d : ℕ} {a b : ℝ} (ha : 0 < a) (p : ℝ) :
+lemma integrableOn_norm_rpow_shell {d : ℕ} {a : ℝ} (ha : 0 < a) (b p : ℝ) :
     IntegrableOn (fun x : Space d ↦ ‖x‖ ^ p) ((Metric.ball 0 b) ∩ (Metric.ball 0 a)ᶜ) := by
   refine ⟨StronglyMeasurable.aestronglyMeasurable (by measurability), ?_⟩
   by_cases hab : a < b
@@ -147,7 +147,7 @@ lemma integrableOn_norm_rpow_of_isBounded_compl_nhds {d : ℕ} {s : Set (Space d
   obtain ⟨a, ha, ha'⟩ := Metric.eventually_nhds_iff_ball.mp hs'
   obtain ⟨b, hb, hb'⟩ := Bornology.IsBounded.subset_ball_lt hs 0 0
   have hsc : s ⊆ (Metric.ball 0 a)ᶜ := Set.subset_compl_comm.mp ha'
-  exact IntegrableOn.mono_set (integrableOn_norm_rpow_shell ha p) (Set.subset_inter hb' hsc)
+  exact IntegrableOn.mono_set (integrableOn_norm_rpow_shell ha b p) (Set.subset_inter hb' hsc)
 
 /-- The function `x ↦ ‖x‖ᵖ` is integrable on a subset with the origin in its exterior provided
   the decay at infinity is fast enough. -/
