@@ -129,7 +129,8 @@ lemma integrableOn_norm_rpow_shell {d : ℕ} {a b : ℝ} (ha : 0 < a) (p : ℝ) 
     have : ‖x‖ < b → ‖x‖ < a := fun _ ↦ by linarith
     simpa
 
-/-- The function `x ↦ ‖x‖ᵖ` is integrable on a bounded neighborhood of the origin iff `0 < d + p`.-/
+/-- The function `x ↦ ‖x‖ᵖ` is integrable on a bounded neighborhood of the origin
+  iff `0 < d + p`. -/
 lemma integrableOn_norm_rpow_iff_of_isBounded_nhds {d : ℕ} (hd : 0 < d) {s : Set (Space d)}
     (hs : Bornology.IsBounded s) (hs' : s ∈ nhds 0) (p : ℝ) :
     IntegrableOn (fun x : Space d ↦ ‖x‖ ^ p) s ↔ 0 < d + p := by
