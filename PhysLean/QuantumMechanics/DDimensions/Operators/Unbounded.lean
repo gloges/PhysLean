@@ -285,10 +285,10 @@ noncomputable instance : SMul ℕ (UnboundedOperator H H') := ⟨nsmulRec⟩
 lemma smul_mem_graph_of_mem_smul_graph {E F : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
     [NormedAddCommGroup F] [InnerProductSpace ℂ F] {f : LinearPMap ℂ E F} {c : ℂ} (hc : c ≠ 0)
     {x : E × F} (h : x ∈ (c • f).graph.topologicalClosure) :
-    (x.1, c⁻¹ • x.2) ∈ f.graph.topologicalClosure := by
+    (x.fst, c⁻¹ • x.snd) ∈ f.graph.topologicalClosure := by
   obtain ⟨b, hb, hb'⟩ := mem_closure_iff_seq_limit.mp h
   apply mem_closure_iff_seq_limit.mpr
-  use fun n ↦ ((b n).1, c⁻¹ • (b n).2)
+  use fun n ↦ ((b n).fst, c⁻¹ • (b n).snd)
   rw [nhds_prod_eq, Filter.tendsto_prod_iff'] at *
   refine ⟨?_, ⟨hb'.1, ?_⟩⟩
   · have {y : f.domain} {z : F} : c • f y = z ↔ f y = c⁻¹ • z := by aesop
@@ -303,23 +303,23 @@ lemma smul_isClosable_of_isClosable {E F : Type*} [NormedAddCommGroup E] [InnerP
   · exact isClosable_of_zero (by simp)
   · use (c • f).graph.topologicalClosure.toLinearPMap
     refine Eq.symm <| toLinearPMap_graph_eq _ (fun x hx hx1 ↦ ?_)
-    suffices c⁻¹ • x.2 = 0 by aesop
-    have hx := smul_mem_graph_of_mem_smul_graph (NeZero.ne c) hx
+    suffices c⁻¹ • x.snd = 0 by aesop
+    have hx := smul_mem_graph_of_mem_smul_graph hc.ne hx
     rw [IsClosable.graph_closure_eq_closure_graph hf, hx1] at hx
     exact graph_fst_eq_zero_snd f.closure hx rfl
 
 noncomputable instance : SMul ℂ (UnboundedOperator H H') where
   smul c U := ⟨c • U.toLinearPMap, U.dense_domain, smul_isClosable_of_isClosable U.is_closable c⟩
 
-@[simp]
-lemma smul_domain (U : UnboundedOperator H H') (c : ℂ) : (c • U).domain = U.domain := rfl
+variable (U : UnboundedOperator H H')
 
 @[simp]
-lemma smul_toLinearPMap (U : UnboundedOperator H H') (c : ℂ) :
-    (c • U).toLinearPMap = c • U.toLinearPMap :=
-  rfl
+lemma smul_domain (c : ℂ) : (c • U).domain = U.domain := rfl
 
-lemma zero_smul_le_zero (U : UnboundedOperator H H') : (0 : ℂ) • U ≤ 0 := ⟨by simp, by simp⟩
+@[simp]
+lemma smul_toLinearPMap (c : ℂ) : (c • U).toLinearPMap = c • U.toLinearPMap := rfl
+
+lemma zero_smul_le_zero : (0 : ℂ) • U ≤ 0 := ⟨by simp, by simp⟩
 
 noncomputable instance : DistribSMul ℂ (UnboundedOperator H H') where
   smul_zero _ := ext <| by ext <;> simp
@@ -351,7 +351,7 @@ noncomputable instance : DistribSMul ℂ (UnboundedOperator H H') where
         · have h : U₁.1 + U₂.1 = c⁻¹ • (c • U₁.1 + c • U₂.1) := by
             ext
             · simp [LinearPMap.add_domain]
-            · simp [LinearPMap.add_apply, smul_smul, inv_mul_cancel₀ (NeZero.ne c)]
+            · simp [LinearPMap.add_apply, smul_smul, inv_mul_cancel₀ hc.ne]
           have hC' := fun h' ↦ hC (h ▸ smul_isClosable_of_isClosable h' c⁻¹)
           rw [add_toLinearPMap_of_dense_not_closable hD' hC']
           ext <;> simp
