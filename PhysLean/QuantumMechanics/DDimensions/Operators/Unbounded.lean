@@ -37,6 +37,7 @@ Definitions:
   - C.1. Partial order
   - C.2. Zero
   - C.3. AddZeroClass
+  - C.4. DistribSMul
 - D. Closure
 - E. Adjoint
 - F. Symmetric operators
@@ -269,7 +270,14 @@ lemma add_assoc {U₁ U₂ U₃ : UnboundedOperator H H'}
     rw [add_toLinearPMap_of_not_dense hD₁₂', add_toLinearPMap_of_not_dense hD₂₃']
 
 /-!
-### C.4. Smul
+### C.4. DistribSMul
+
+Scalar multiplication by natural numbers is defined recursively as usual with `(0 : ℕ) • U = 0` and
+`n.succ • U = n • U + U`. Note that `(0 : ℕ) • U` has domain `⊤` irrespective of the domain of `U`.
+
+Scalar multiplication by complex numbers is inherited from `LinearPMap`. Note that `(c : ℂ) • U` has
+the same domain as `U` for all constants; in particular, `(0 : ℂ) • U ≤ 0` with equality if and only
+if `U.domain = ⊤`.
 -/
 
 noncomputable instance : SMul ℕ (UnboundedOperator H H') := ⟨nsmulRec⟩
