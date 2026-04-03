@@ -40,6 +40,7 @@ Notation:
   - A.1. Position vector
   - A.2. Radius powers (regularized)
   - A.3. Radius powers
+    - A.3.1. As limit of regularized operators
 - B. Unbounded operators
   - B.1. Position vector
   - B.2. Radius powers (regularized)
@@ -264,8 +265,14 @@ lemma radiusPowOperator_apply_memHS {d : ℕ} (s : ℝ) (h : 0 < d + 2 * s) (ψ 
           Nat.cast_eq_zero.mpr <| Int.toNat_of_nonpos <| Int.ceil_le.mpr (by rwa [Int.cast_zero])
         exact hs' ▸ hs
 
+/-!
+#### A.3.1. As limit of regularized operators
+-/
+
 open Filter
 
+/-- Neighborhoods of "$0$" in the non-zero reals, i.e. those sets containing
+  $(-\epsilon,0) \cup (0,\epsilon) \subset \mathbb{R}^\times$ for some $\epsilon > 0$. -/
 abbrev nhdsZeroUnits : Filter ℝˣ := comap (Units.coeHom ℝ) (nhds 0)
 
 instance : NeBot nhdsZeroUnits := by
@@ -275,6 +282,7 @@ instance : NeBot nhdsZeroUnits := by
   apply hε
   simp [abs_of_pos, hε_pos]
 
+/-- `𝐫[ε,s] ψ` converges pointwise to `𝐫[s] ψ` as `ε → 0` except perhaps at `x = 0`. -/
 lemma radiusRegPow_tendsto_radiusPow {d : ℕ} (s : ℝ) (ψ : 𝓢(Space d, ℂ)) {x : Space d}
     (hx : x ≠ 0) : Tendsto (fun ε ↦ 𝐫[ε,s] ψ x) nhdsZeroUnits (nhds (𝐫[s] ψ x)) := by
   have hpow : ‖x‖ ^ s = (‖x‖ ^ 2 + 0 ^ 2) ^ (s / 2) := by
@@ -284,6 +292,7 @@ lemma radiusRegPow_tendsto_radiusPow {d : ℕ} (s : ℝ) (ψ : 𝓢(Space d, ℂ
   refine Tendsto.rpow_const ?_ (Or.inl <| by simp [hx])
   exact Tendsto.const_add _ <| Tendsto.pow tendsto_comap 2
 
+/-- `𝐫[ε,s] ψ` converges pointwise to `𝐫[s] ψ` as `ε → 0` provided `𝐫[ε,s] ψ 0` is bounded. -/
 lemma radiusRegPow_tendsto_radiusPow' {d : ℕ} (s : ℝ) (ψ : 𝓢(Space d, ℂ)) (h : 0 ≤ s ∨ ψ 0 = 0) :
     Tendsto (fun ε ↦ ⇑(𝐫[ε,s] ψ)) nhdsZeroUnits (nhds (𝐫[s] ψ)) := by
   refine tendsto_pi_nhds.mpr fun x ↦ ?_
@@ -299,7 +308,8 @@ lemma radiusRegPow_tendsto_radiusPow' {d : ℕ} (s : ℝ) (ψ : 𝓢(Space d, �
     · simp [hψ]
   · exact radiusRegPow_tendsto_radiusPow s ψ hx.ne
 
-lemma radiusRegPow_ae_tendsto_radiusPow {d : ℕ} (s : ℝ) (ψ : 𝓢(Space d, ℂ)) (hd : 0 < d) :
+/-- a.e. version of `radiusRegPow_tendsto_radiusPow` -/
+lemma radiusRegPow_ae_tendsto_radiusPow {d : ℕ} (hd : 0 < d) (s : ℝ) (ψ : 𝓢(Space d, ℂ)) :
     ∀ᵐ x, Tendsto (fun ε ↦ 𝐫[ε,s] ψ x) nhdsZeroUnits (nhds (𝐫[s] ψ x)) := by
   apply ae_iff.mpr
   suffices h : {x | ¬Tendsto (fun ε ↦ 𝐫[ε,s] ψ x) nhdsZeroUnits (nhds (𝐫[s] ψ x))} ⊆ {0} by
@@ -311,8 +321,8 @@ lemma radiusRegPow_ae_tendsto_radiusPow {d : ℕ} (s : ℝ) (ψ : 𝓢(Space d, 
   by_contra hx'
   exact hx <| radiusRegPow_tendsto_radiusPow s ψ hx'
 
-lemma radiusRegPow_ae_tendsto_iff {d : ℕ} {s : ℝ} {ψ : 𝓢(Space d, ℂ)} {φ : Space d → ℂ}
-    (hd : 0 < d) : (∀ᵐ x, Tendsto (fun ε ↦ 𝐫[ε,s] ψ x) nhdsZeroUnits (nhds (φ x)))
+lemma radiusRegPow_ae_tendsto_iff {d : ℕ} (hd : 0 < d) {s : ℝ} {ψ : 𝓢(Space d, ℂ)}
+    {φ : Space d → ℂ} : (∀ᵐ x, Tendsto (fun ε ↦ 𝐫[ε,s] ψ x) nhdsZeroUnits (nhds (φ x)))
     ↔ φ =ᵐ[volume] 𝐫[s] ψ := by
   let t₁ := {x | ¬Tendsto (fun ε ↦ 𝐫[ε,s] ψ x) nhdsZeroUnits (nhds (φ x))}
   let t₂ := {x | φ x ≠ 𝐫[s] ψ x}
