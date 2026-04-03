@@ -264,6 +264,41 @@ lemma radiusPowOperator_apply_memHS {d : ℕ} (s : ℝ) (h : 0 < d + 2 * s) (ψ 
           Nat.cast_eq_zero.mpr <| Int.toNat_of_nonpos <| Int.ceil_le.mpr (by rwa [Int.cast_zero])
         exact hs' ▸ hs
 
+open Filter
+
+abbrev nhdsZeroUnits : Filter ℝˣ := comap (Units.coeHom ℝ) (nhds 0)
+
+instance : NeBot nhdsZeroUnits := by
+  refine comap_neBot fun t ht ↦ ?_
+  obtain ⟨ε, hε_pos, hε⟩ := Metric.mem_nhds_iff.mp ht
+  use Units.mk0 (ε / 2) (by linarith)
+  apply hε
+  simp [abs_of_pos, hε_pos]
+
+lemma radiusRegPow_tendsto_radiusPow {d : ℕ} (s : ℝ) (ψ : 𝓢(Space d, ℂ)) {x : Space d}
+    (hx : x ≠ 0) : Tendsto (fun ε ↦ 𝐫[ε,s] ψ x) nhdsZeroUnits (nhds (𝐫[s] ψ x)) := by
+  have hpow : ‖x‖ ^ s = (‖x‖ ^ 2 + 0 ^ 2) ^ (s / 2) := by
+    simp [← Real.rpow_natCast_mul, mul_div_cancel₀]
+  simp only [radiusRegPowOperator_apply, radiusPowOperator_apply, Complex.real_smul, hpow]
+  refine Tendsto.mul_const (ψ x) <| Tendsto.ofReal ?_
+  refine Tendsto.rpow_const ?_ (Or.inl <| by simp [hx])
+  exact Tendsto.const_add _ <| Tendsto.pow tendsto_comap 2
+
+lemma radiusRegPow_tendsto_radiusPow' {d : ℕ} (s : ℝ) (ψ : 𝓢(Space d, ℂ)) (h : 0 ≤ s ∨ ψ 0 = 0) :
+    Tendsto (fun ε ↦ ⇑(𝐫[ε,s] ψ)) nhdsZeroUnits (nhds (𝐫[s] ψ)) := by
+  refine tendsto_pi_nhds.mpr fun x ↦ ?_
+  rcases eq_zero_or_neZero x with (rfl | hx)
+  · rcases h with (hs | hψ)
+    · simp only [radiusRegPowOperator_apply, radiusPowOperator_apply, Complex.real_smul, norm_zero,
+        ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, zero_add]
+      have : (0 : ℝ) ^ s = (0 ^ 2) ^ (s / 2) := by
+        rw [← Real.rpow_natCast_mul (le_refl 0), Nat.cast_ofNat, mul_div_cancel₀ s (by norm_num)]
+      rw [this]
+      refine Tendsto.mul_const (ψ 0) <| Tendsto.ofReal ?_
+      exact Tendsto.rpow_const (Tendsto.pow tendsto_comap 2) (Or.inr <| by linarith)
+    · simp [hψ]
+  · exact radiusRegPow_tendsto_radiusPow s ψ hx.ne
+
 end
 
 /-!
