@@ -357,7 +357,7 @@ private lemma pSqr_comm_pL_Lp {d : ℕ} (i : Fin d) :
 private lemma r_comm_rx {d : ℕ} (ε : ℝˣ) (i : Fin d) : ⁅𝐫[d,ε,-1], 𝐫[ε,-1] ∘L 𝐱[i]⁆ = 0 := by
   simp [lie_leibniz, ← lie_skew 𝐫[_,_] 𝐱[_]]
 
-private lemma xL_Lx_eq {d : ℕ} (ε : ℝˣ) (i : Fin d):
+private lemma xL_Lx_eq {d : ℕ} (ε : ℝˣ) (i : Fin d) :
     ∑ j, (𝐱[j] ∘L 𝐋[i,j] + 𝐋[i,j] ∘L 𝐱[j]) = (2 : ℝ) • (positionDotMomentum d) ∘L 𝐱[i]
     + (-I * ℏ * (d - 3)) • 𝐱[i] + ((-2 : ℝ) • 𝐫[ε,2] ∘L 𝐩[i] + (2 * ε.1 ^ 2 : ℝ) • 𝐩[i]) := by
   -- Change summand
