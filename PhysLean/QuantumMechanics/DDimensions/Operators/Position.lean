@@ -299,6 +299,36 @@ lemma radiusRegPow_tendsto_radiusPow' {d : ℕ} (s : ℝ) (ψ : 𝓢(Space d, �
     · simp [hψ]
   · exact radiusRegPow_tendsto_radiusPow s ψ hx.ne
 
+lemma radiusRegPow_ae_tendsto_radiusPow {d : ℕ} (s : ℝ) (ψ : 𝓢(Space d, ℂ)) (hd : 0 < d) :
+    ∀ᵐ x, Tendsto (fun ε ↦ 𝐫[ε,s] ψ x) nhdsZeroUnits (nhds (𝐫[s] ψ x)) := by
+  apply ae_iff.mpr
+  suffices h : {x | ¬Tendsto (fun ε ↦ 𝐫[ε,s] ψ x) nhdsZeroUnits (nhds (𝐫[s] ψ x))} ⊆ {0} by
+    rcases Set.subset_singleton_iff_eq.mp h with (h' | h')
+    · exact h' ▸ measure_empty
+    · have : Nontrivial (Space d) := Nat.succ_pred_eq_of_pos hd ▸ Space.instNontrivialSucc
+      exact h' ▸ measure_singleton 0
+  intro x hx
+  by_contra hx'
+  exact hx <| radiusRegPow_tendsto_radiusPow s ψ hx'
+
+lemma radiusRegPow_ae_tendsto_iff {d : ℕ} {s : ℝ} {ψ : 𝓢(Space d, ℂ)} {φ : Space d → ℂ}
+    (hd : 0 < d) : (∀ᵐ x, Tendsto (fun ε ↦ 𝐫[ε,s] ψ x) nhdsZeroUnits (nhds (φ x)))
+    ↔ φ =ᵐ[volume] 𝐫[s] ψ := by
+  let t₁ := {x | ¬Tendsto (fun ε ↦ 𝐫[ε,s] ψ x) nhdsZeroUnits (nhds (φ x))}
+  let t₂ := {x | φ x ≠ 𝐫[s] ψ x}
+  show volume t₁ = 0 ↔ volume t₂ = 0
+  suffices heq : t₁ ∪ {0} = t₂ ∪ {0} by
+    have : Nontrivial (Space d) := Nat.succ_pred_eq_of_pos hd ▸ Space.instNontrivialSucc
+    have hUnion : ∀ t : Set (Space d), volume t = 0 ↔ volume (t ∪ {0}) = 0 :=
+      fun _ ↦ by simp only [measure_union_null_iff, measure_singleton, and_true]
+    rw [hUnion t₁, hUnion t₂, heq]
+  ext x
+  rcases eq_zero_or_neZero x with (rfl | hx)
+  · simp
+  · simp only [Set.union_singleton, Set.mem_insert_iff, hx.ne, false_or]
+    have hLim := radiusRegPow_tendsto_radiusPow s ψ hx.ne
+    exact not_congr ⟨fun h ↦ tendsto_nhds_unique h hLim, fun h ↦ h ▸ hLim⟩
+
 end
 
 /-!
