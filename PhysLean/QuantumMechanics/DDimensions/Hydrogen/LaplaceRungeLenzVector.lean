@@ -268,49 +268,40 @@ private lemma positionCompMomentumSqr_comm_constRadiusRegInvCompPosition_add
         smul_smul, ofReal_mul]
       ring_nf
 
+private lemma momentum_comm_radiusRegPow_position_symm {d : ℕ} (ε : ℝˣ) (s : ℝ) (i j : Fin d) :
+    ⁅𝐩[i], 𝐫[ε,s] ∘L 𝐱[j]⁆ = ⁅𝐩[j], 𝐫[ε,s] ∘L 𝐱[i]⁆ := by
+  simp [← lie_skew 𝐩[_] _, leibniz_lie, position_commutation_momentum, symm j i,
+    radiusRegPow_commutation_momentum, position_comp_commute j i, comp_assoc]
+
 private lemma positionDotMomentumCompMomentum_comm_constRadiusRegInvCompPosition_add
     (ε : ℝˣ) (i j : Fin H.d) :
     ⁅positionDotMomentumCompMomentum i, constRadiusRegInvCompPosition H ε j⁆ +
     ⁅constRadiusRegInvCompPosition H ε i, positionDotMomentumCompMomentum j⁆ =
-    (H.m * H.k * Complex.I * ℏ * ε.1 ^ 2) • 𝐫[ε,-3] ∘L 𝐋[i,j] := by
-  unfold positionDotMomentumCompMomentum constRadiusRegInvCompPosition
-  nth_rw 2 [← lie_skew]
-  repeat rw [lie_smul, leibniz_lie, lie_leibniz, lie_leibniz]
-  repeat rw [← lie_skew 𝐩[_] 𝐱[_], position_commutation_momentum]
-  repeat rw [positionDotMomentum_commutation_position]
-  repeat rw [← lie_skew 𝐩[_] _, radiusRegPow_commutation_momentum]
-  repeat rw [positionDotMomentum_commutation_radiusRegPow]
-  simp only [smul_comp, neg_comp, comp_assoc]
-  rw [position_comp_commute j i, symm j i]
-  unfold angularMomentumOperator
-  ext ψ x
-  simp only [comp_neg, comp_smulₛₗ, RingHom.id_apply, Complex.ofReal_neg,
-    Complex.ofReal_one, neg_mul, one_mul, neg_smul, neg_neg, comp_add, sub_comp, smul_comp,
-    add_comp, neg_comp, smul_add, smul_neg, neg_add_rev, ContinuousLinearMap.add_apply,
-    ContinuousLinearMap.neg_apply, coe_smul', coe_comp', Pi.smul_apply, Function.comp_apply,
-    coe_sub', Pi.sub_apply, SchwartzMap.add_apply, SchwartzMap.neg_apply, SchwartzMap.smul_apply,
-    smul_eq_mul, Complex.real_smul, Complex.ofReal_mul, SchwartzMap.sub_apply, Complex.ofReal_pow,
-    comp_sub]
-  ring_nf
+    (I * ℏ * H.m * H.k * ε.1 ^ 2) • 𝐫[ε,-3] ∘L 𝐋[i,j] := by
+  suffices ∀ k, ⁅positionDotMomentum H.d, constRadiusRegInvCompPosition H ε k⁆
+      = (-I * ℏ * H.m * H.k * ε.1 ^ 2) • 𝐫[ε,-3] ∘L 𝐱[k] by
+    nth_rw 2 [← lie_skew]
+    simp_rw [positionDotMomentumCompMomentum, leibniz_lie, this, constRadiusRegInvCompPosition,
+      lie_smul, momentum_comm_radiusRegPow_position_symm, ← sub_eq_add_neg, add_sub_add_left_eq_sub,
+      smul_comp, ← smul_sub, comp_assoc, ← comp_sub, angularMomentumOperator_antisymm i j, comp_neg,
+      smul_neg, neg_mul, neg_smul, angularMomentumOperator]
+  intro k
+  calc
+    _ = (H.m * H.k) • (𝐫[ε,-1] ∘L ⁅positionDotMomentum H.d, 𝐱[k]⁆
+        + ⁅positionDotMomentum H.d, 𝐫[ε,-1]⁆ ∘L 𝐱[k]) := by
+      rw [constRadiusRegInvCompPosition, lie_smul, lie_leibniz]
+    _ = -(I * ℏ) • (H.m * H.k) • (ε.1 ^ 2) • 𝐫[ε,-1-2] ∘L 𝐱[k] := by
+      simp [positionDotMomentum_commutation_position, positionDotMomentum_commutation_radiusRegPow,
+        sub_comp, smul_sub, ← add_sub_assoc, smul_comm _ (I * ℏ)]
+    _ = (-I * ℏ * H.m * H.k * ε.1 ^ 2) • 𝐫[ε,-3] ∘L 𝐱[k] := by
+      simp only [← Complex.coe_smul, ofReal_pow, ofReal_mul, smul_smul]
+      ring_nf
 
 private lemma constMomentum_comm_constRadiusRegInvCompPosition_add (ε : ℝˣ) (i j : Fin H.d) :
     ⁅constMomentum i, constRadiusRegInvCompPosition H ε j⁆ +
     ⁅constRadiusRegInvCompPosition H ε i, constMomentum j⁆ = 0 := by
-  unfold constMomentum constRadiusRegInvCompPosition
   nth_rw 2 [← lie_skew]
-  repeat rw [smul_lie, lie_smul, lie_leibniz]
-  repeat rw [← lie_skew 𝐩[_] _]
-  repeat rw [position_commutation_momentum, radiusRegPow_commutation_momentum]
-  simp only [neg_comp, smul_comp, comp_assoc]
-  rw [position_comp_commute j i, symm j i]
-  ext ψ x
-  simp only [comp_neg, comp_smulₛₗ, RingHom.id_apply, Complex.ofReal_neg,
-    Complex.ofReal_one, neg_mul, one_mul, neg_smul, neg_neg, smul_add, smul_neg, neg_add_rev,
-    ContinuousLinearMap.add_apply, ContinuousLinearMap.neg_apply, coe_smul', Pi.smul_apply,
-    coe_comp', Function.comp_apply, SchwartzMap.add_apply, SchwartzMap.neg_apply,
-    SchwartzMap.smul_apply, smul_eq_mul, Complex.real_smul, Complex.ofReal_mul,
-    ContinuousLinearMap.zero_apply, SchwartzMap.zero_apply]
-  ring
+  simp [constMomentum, constRadiusRegInvCompPosition, momentum_comm_radiusRegPow_position_symm]
 
 private lemma constRadiusRegInvCompPosition_comm (ε : ℝˣ) (i j : Fin H.d) :
     ⁅constRadiusRegInvCompPosition H ε i, constRadiusRegInvCompPosition H ε j⁆ = 0 := by
