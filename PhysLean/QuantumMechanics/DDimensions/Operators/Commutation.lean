@@ -260,6 +260,9 @@ lemma angularMomentum_commutation_radiusRegPow : ⁅𝐋[i,j], 𝐫[d,ε,s]⁆ =
   simp [← lie_skew 𝐩[_] 𝐫[_,_], radiusRegPow_commutation_momentum, comp_neg,
     ← position_comp_radiusRegPow_commute, ← comp_assoc, position_comp_commute]
 
+lemma angularMomentum_comp_radiusRegPow_commute : 𝐋[i,j] ∘L 𝐫[ε,s] = 𝐫[ε,s] ∘L 𝐋[i,j] := by
+  rw [comp_eq_comp_add_commute, angularMomentum_commutation_radiusRegPow, add_zero]
+
 @[simp]
 lemma angularMomentumSqr_commutation_radiusRegPow :
     ⁅angularMomentumOperatorSqr (d := d), 𝐫[d,ε,s]⁆ = 0 := by
