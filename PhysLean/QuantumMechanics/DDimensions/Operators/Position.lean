@@ -271,8 +271,8 @@ lemma radiusPowOperator_apply_memHS {d : ℕ} (s : ℝ) (h : 0 < d + 2 * s) (ψ 
 
 open Filter
 
-/-- Neighborhoods of "$0$" in the non-zero reals, i.e. those sets containing
-  $(-\epsilon,0) \cup (0,\epsilon) \subset \mathbb{R}^\times$ for some $\epsilon > 0$. -/
+/-- Neighborhoods of "0" in the non-zero reals, i.e. those sets containing `(-ε,0) ∪ (0,ε) ⊆ ℝˣ`
+  for some `ε > 0`. -/
 abbrev nhdsZeroUnits : Filter ℝˣ := comap (Units.coeHom ℝ) (nhds 0)
 
 instance : NeBot nhdsZeroUnits := by
