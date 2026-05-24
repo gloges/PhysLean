@@ -6,6 +6,7 @@ Authors: Leonardo A Lessa
 module
 
 public import QuantumInfo.Finite.MState
+public import Physlib.Meta.Sorry
 
 @[expose] public section
 
