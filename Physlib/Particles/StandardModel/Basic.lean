@@ -25,6 +25,12 @@ open Matrix
 open Complex
 open ComplexConjugate
 
+/-!
+
+## The unquotiented gauge group
+
+-/
+
 /-- The global gauge group of the Standard Model with no discrete quotients.
   The `I` in the Name is an indication of the statement that this has no discrete quotients. -/
 abbrev GaugeGroupI : Type :=
@@ -109,6 +115,12 @@ lemma ofU1Subgroup_toSU2 (u1 : unitary ℂ) :
 lemma ofU1Subgroup_toU1 (u1 : unitary ℂ) :
     toU1 (ofU1Subgroup u1) = u1 := rfl
 end GaugeGroupI
+
+/-!
+
+## The ℤ₆ quotient
+
+-/
 
 /-- The unitary complex number associated to a sixth root of unity. -/
 noncomputable def gaugeGroupℤ₆UnitaryOfRoot (α : rootsOfUnity 6 ℂ) : unitary ℂ :=
@@ -319,6 +331,12 @@ lemma mk_gaugeGroupℤ₆OfRoot (α : rootsOfUnity 6 ℂ) :
 
 end GaugeGroupℤ₆
 
+/-!
+
+## The ℤ₂ quotient
+
+-/
+
 /-- The ℤ₂subgroup of the un-quotiented gauge group which acts trivially on all particles in the
 standard model, i.e., the ℤ₂-subgroup of `GaugeGroupI` derived from the ℤ₂ subgroup of
 `gaugeGroupℤ₆SubGroup`.
@@ -338,24 +356,134 @@ informal_definition GaugeGroupℤ₂ where
   deps := [``GaugeGroupI, ``StandardModel.gaugeGroupℤ₂SubGroup]
   tag := "6V2GO"
 
+/-!
+
+## The ℤ₃ quotient
+
+-/
+
+/-- The inclusion of third roots of unity into sixth roots of unity. -/
+noncomputable def gaugeGroupℤ₃RootToℤ₆Root : rootsOfUnity 3 ℂ →* rootsOfUnity 6 ℂ :=
+  Subgroup.inclusion (rootsOfUnity_le_of_dvd (by norm_num : 3 ∣ 6))
+
+/-- The element of `GaugeGroupI` associated to a third root of unity. -/
+noncomputable def gaugeGroupℤ₃OfRoot (α : rootsOfUnity 3 ℂ) : GaugeGroupI :=
+  gaugeGroupℤ₆OfRoot (gaugeGroupℤ₃RootToℤ₆Root α)
+
+@[simp]
+lemma gaugeGroupℤ₃OfRoot_toSU3 (α : rootsOfUnity 3 ℂ) :
+    GaugeGroupI.toSU3 (gaugeGroupℤ₃OfRoot α) =
+      gaugeGroupℤ₆SU3OfRoot (gaugeGroupℤ₃RootToℤ₆Root α) := rfl
+
+@[simp]
+lemma gaugeGroupℤ₃OfRoot_toSU2 (α : rootsOfUnity 3 ℂ) :
+    GaugeGroupI.toSU2 (gaugeGroupℤ₃OfRoot α) =
+      gaugeGroupℤ₆SU2OfRoot (gaugeGroupℤ₃RootToℤ₆Root α) := rfl
+
+@[simp]
+lemma gaugeGroupℤ₃OfRoot_toU1 (α : rootsOfUnity 3 ℂ) :
+    GaugeGroupI.toU1 (gaugeGroupℤ₃OfRoot α) =
+      gaugeGroupℤ₆UnitaryOfRoot (gaugeGroupℤ₃RootToℤ₆Root α) := rfl
+
+lemma gaugeGroupℤ₃OfRoot_mem_center (α : rootsOfUnity 3 ℂ) :
+    gaugeGroupℤ₃OfRoot α ∈ Subgroup.center GaugeGroupI :=
+  gaugeGroupℤ₆OfRoot_mem_center (gaugeGroupℤ₃RootToℤ₆Root α)
+
+/-- The homomorphism from third roots of unity to `GaugeGroupI`. -/
+noncomputable def gaugeGroupℤ₃Hom : rootsOfUnity 3 ℂ →* GaugeGroupI :=
+  gaugeGroupℤ₆Hom.comp gaugeGroupℤ₃RootToℤ₆Root
+
+@[simp]
+lemma gaugeGroupℤ₃Hom_apply (α : rootsOfUnity 3 ℂ) :
+    gaugeGroupℤ₃Hom α = gaugeGroupℤ₃OfRoot α := rfl
+
+@[simp]
+lemma gaugeGroupℤ₃Hom_toSU3 (α : rootsOfUnity 3 ℂ) :
+    GaugeGroupI.toSU3 (gaugeGroupℤ₃Hom α) =
+      gaugeGroupℤ₆SU3OfRoot (gaugeGroupℤ₃RootToℤ₆Root α) := rfl
+
+@[simp]
+lemma gaugeGroupℤ₃Hom_toSU2 (α : rootsOfUnity 3 ℂ) :
+    GaugeGroupI.toSU2 (gaugeGroupℤ₃Hom α) =
+      gaugeGroupℤ₆SU2OfRoot (gaugeGroupℤ₃RootToℤ₆Root α) := rfl
+
+@[simp]
+lemma gaugeGroupℤ₃Hom_toU1 (α : rootsOfUnity 3 ℂ) :
+    GaugeGroupI.toU1 (gaugeGroupℤ₃Hom α) =
+      gaugeGroupℤ₆UnitaryOfRoot (gaugeGroupℤ₃RootToℤ₆Root α) := rfl
+
 /-- The ℤ₃-subgroup of the un-quotiented gauge group which acts trivially on all particles in the
 standard model, i.e., the ℤ₃-subgroup of `GaugeGroupI` derived from the ℤ₃ subgroup of
 `gaugeGroupℤ₆SubGroup`.
 
 See https://math.ucr.edu/home/baez/guts.pdf
 -/
-informal_definition gaugeGroupℤ₃SubGroup where
-  deps := [``GaugeGroupI]
-  tag := "6V2GV"
+noncomputable def gaugeGroupℤ₃SubGroup : Subgroup GaugeGroupI :=
+  gaugeGroupℤ₃Hom.range
+
+lemma gaugeGroupℤ₃OfRoot_mem (α : rootsOfUnity 3 ℂ) :
+    gaugeGroupℤ₃OfRoot α ∈ gaugeGroupℤ₃SubGroup :=
+  ⟨α, rfl⟩
+
+lemma mem_gaugeGroupℤ₃SubGroup_iff (g : GaugeGroupI) :
+    g ∈ gaugeGroupℤ₃SubGroup ↔ ∃ α : rootsOfUnity 3 ℂ, gaugeGroupℤ₃OfRoot α = g := by
+  simp [gaugeGroupℤ₃SubGroup]
+
+lemma gaugeGroupℤ₃SubGroup_le_gaugeGroupℤ₆SubGroup :
+    gaugeGroupℤ₃SubGroup ≤ gaugeGroupℤ₆SubGroup := by
+  intro g hg
+  rw [mem_gaugeGroupℤ₃SubGroup_iff] at hg
+  rcases hg with ⟨α, rfl⟩
+  exact gaugeGroupℤ₆OfRoot_mem (gaugeGroupℤ₃RootToℤ₆Root α)
+
+lemma gaugeGroupℤ₃SubGroup_le_center :
+    gaugeGroupℤ₃SubGroup ≤ Subgroup.center GaugeGroupI := by
+  intro g hg
+  rw [mem_gaugeGroupℤ₃SubGroup_iff] at hg
+  rcases hg with ⟨α, rfl⟩
+  exact gaugeGroupℤ₃OfRoot_mem_center α
+
+instance gaugeGroupℤ₃SubGroup_normal : gaugeGroupℤ₃SubGroup.Normal where
+  conj_mem n hn g := by
+    have hn_center : n ∈ Subgroup.center GaugeGroupI := gaugeGroupℤ₃SubGroup_le_center hn
+    have hcomm : g * n = n * g := (Subgroup.mem_center_iff.mp hn_center) g
+    have hconj : g * n * g⁻¹ = n := by
+      calc
+        g * n * g⁻¹ = n * g * g⁻¹ := by rw [hcomm]
+        _ = n := by simp [mul_assoc]
+    simpa [hconj] using hn
 
 /-- The gauge group of the Standard Model with a ℤ₃-quotient, i.e., the quotient of `GaugeGroupI` by
 the ℤ₃-subgroup `gaugeGroupℤ₃SubGroup`.
 
 See https://math.ucr.edu/home/baez/guts.pdf
 -/
-informal_definition GaugeGroupℤ₃ where
-  deps := [``GaugeGroupI, ``StandardModel.gaugeGroupℤ₃SubGroup]
-  tag := "6V2G3"
+def GaugeGroupℤ₃ : Type :=
+  GaugeGroupI ⧸ gaugeGroupℤ₃SubGroup
+
+noncomputable instance : Group GaugeGroupℤ₃ :=
+  inferInstanceAs (Group (GaugeGroupI ⧸ gaugeGroupℤ₃SubGroup))
+
+namespace GaugeGroupℤ₃
+
+/-- The quotient map from `GaugeGroupI` to `GaugeGroupℤ₃`. -/
+noncomputable def mk : GaugeGroupI →* GaugeGroupℤ₃ :=
+  QuotientGroup.mk' gaugeGroupℤ₃SubGroup
+
+@[simp]
+lemma mk_gaugeGroupℤ₃OfRoot (α : rootsOfUnity 3 ℂ) :
+    mk (gaugeGroupℤ₃OfRoot α) = 1 := by
+  change ((gaugeGroupℤ₃OfRoot α : GaugeGroupI) : GaugeGroupI ⧸ gaugeGroupℤ₃SubGroup) = 1
+  rw [QuotientGroup.eq_one_iff]
+  exact gaugeGroupℤ₃OfRoot_mem α
+
+end GaugeGroupℤ₃
+
+/-!
+
+## Gauge groups from quotient choices
+
+-/
 
 /-- Specifies the allowed quotients of `SU(3) x SU(2) x U(1)` which give a valid
   gauge group of the Standard Model. -/
@@ -398,6 +526,12 @@ informal_lemma gaugeGroupI_lie where
 informal_lemma gaugeGroup_lie where
   deps := [``GaugeGroup]
   tag := "6V2HR"
+
+/-!
+
+## Gauge bundles and transformations
+
+-/
 
 /-- The trivial principal bundle over SpaceTime with structure group `GaugeGroupI`. -/
 informal_definition gaugeBundleI where
