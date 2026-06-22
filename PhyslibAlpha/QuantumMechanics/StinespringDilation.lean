@@ -7,6 +7,7 @@ module
 public import Mathlib.Data.Matrix.PEquiv
 public import Mathlib.Probability.Distributions.Poisson.Basic
 public import Mathlib.Analysis.Normed.Lp.lpSpace
+public import Physlib.Meta.TODO.Basic
 public import Mathlib
 /-!
 # Stinespring dilation
@@ -14,6 +15,11 @@ public import Mathlib
 
 @[expose] public section
 noncomputable section
+
+TODO "There is a different version of the Stienspring dilation in
+  `QuantumInfo.Channels.CPTP`. We should unify the the version here with that one.
+  Some of the definitions here are more general then the ones in `QuantumInfo` as they
+  do not restrict to `ℂ`. This is something we should modify in `QuantumInfo`."
 
 open Matrix MatrixOrder ComplexOrder RCLike TensorProduct Kronecker
 
