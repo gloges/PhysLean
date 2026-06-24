@@ -110,11 +110,11 @@ lemma deriv_eq_mfderiv {M d} [NormedAddCommGroup M] [NormedSpace ℝ M]
 open Manifold in
 lemma mdifferentiable_manifoldStructure_iff_differentiable {M d} [NormedAddCommGroup M]
     [NormedSpace ℝ M] {f : Space d → M} {x : Space d} :
-    MDifferentiableAt (Space.manifoldStructure d) 𝓘(ℝ, M) f x ↔ DifferentiableAt ℝ f x := by
+    MDifferentiableAt (𝓡 d) 𝓘(ℝ, M) f x ↔ DifferentiableAt ℝ f x := by
   constructor
   · intro h
     rw [← mdifferentiableAt_iff_differentiableAt]
-    apply h.comp (I' := Space.manifoldStructure d)
+    apply h.comp (I' := 𝓡 d)
     exact (modelDiffeo.symm.mdifferentiable (WithTop.top_ne_zero)).mdifferentiableAt
   · intro h
     apply (mdifferentiableAt_iff_differentiableAt.mpr h).comp (I' := 𝓘(ℝ, Space d))
@@ -130,10 +130,10 @@ set_option backward.isDefEq.respectTransparency false in
   manifolds with the manifold structure `Space.manifoldStructure d`. -/
 lemma deriv_eq_mfderiv_manifoldStructure {M d} [NormedAddCommGroup M] [NormedSpace ℝ M]
     (μ : Fin d) (f : Space d → M) (x : Space d) :
-    deriv μ f x = mfderiv (Space.manifoldStructure d) 𝓘(ℝ, M) f x (EuclideanSpace.single μ 1) := by
+    deriv μ f x = mfderiv (𝓡 d) 𝓘(ℝ, M) f x (EuclideanSpace.single μ 1) := by
   by_cases hf : DifferentiableAt ℝ f x
   · rw [deriv_eq_mfderiv]
-    change _ = mfderiv (Space.manifoldStructure d) 𝓘(ℝ, M)
+    change _ = mfderiv (𝓡 d) 𝓘(ℝ, M)
       (f ∘ modelDiffeo) x (EuclideanSpace.single μ 1)
     rw [mfderiv_comp (I' := 𝓘(ℝ, Space d)) _ hf.mdifferentiableAt
       (modelDiffeo.mdifferentiable WithTop.top_ne_zero).mdifferentiableAt]
