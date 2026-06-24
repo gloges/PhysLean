@@ -430,6 +430,7 @@ public import Physlib.SpaceAndTime.Time.TimeTransMan
 public import Physlib.SpaceAndTime.Time.TimeUnit
 public import Physlib.SpaceAndTime.TimeAndSpace.Basic
 public import Physlib.SpaceAndTime.TimeAndSpace.ConstantTimeDist
+public import Physlib.SpaceAndTime.TimeAndSpace.EuclideanGroup.Action
 public import Physlib.StatisticalMechanics.BoltzmannConstant
 public import Physlib.StatisticalMechanics.CanonicalEnsemble.Basic
 public import Physlib.StatisticalMechanics.CanonicalEnsemble.Finite

@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2025 Joseph Tooby-Smith. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Zhi Kai Pong, Joseph Tooby-Smith
+Authors: Zhi Kai Pong, Joseph Tooby-Smith, Rob Sneiderman
 -/
 module
 
@@ -12,13 +12,16 @@ public import Physlib.SpaceAndTime.Space.Derivatives.Curl
 
 ## i. Overview
 
-In this module we define and prove basic lemmas about derivatives of functions and
-distributions on both `Time` and `Space d`.
+In this module we define `TimeAndSpace d` as the product of `Time` and `Space d`, and
+prove basic lemmas about derivatives of functions and distributions on both coordinates.
 
-We put these results in the namespace `Space` by convention.
+The derivative and distribution results are in the namespace `Space` by convention.
 
 ## ii. Key results
 
+- `TimeAndSpace d` : Euclidean spacetime as the product of time and space.
+- `TimeAndSpace.time` : The projection from `TimeAndSpace d` to `Time`.
+- `TimeAndSpace.space` : The projection from `TimeAndSpace d` to `Space d`.
 - `distTimeDeriv` : The derivative of a distribution on `Time × Space d` along the
   temporal coordinate.
 - `distSpaceDeriv` : The derivative of a distribution on `Time × Space d` along the
@@ -29,13 +32,14 @@ We put these results in the namespace `Space` by convention.
 
 ## iii. Table of contents
 
-- A. Derivatives involving time and space
-  - A.1. Space and time derivatives in terms of curried functions
-  - A.2. Commuting time and space derivatives
-  - A.3. Differentiablity conditions
-  - A.4. Time derivative commute with curl
-  - A.5. Constant of time deriative and space derivatives zero
-  - A.6. Equal up to a constant of time and space derivatives equal
+- A. The coordinate product and derivatives involving time and space
+  - A.1. The `TimeAndSpace` coordinate product
+  - A.2. Space and time derivatives in terms of curried functions
+  - A.3. Commuting time and space derivatives
+  - A.4. Differentiablity conditions
+  - A.5. Time derivative commute with curl
+  - A.6. Constant of time deriative and space derivatives zero
+  - A.7. Equal up to a constant of time and space derivatives equal
 - B. Derivatives of distributions on Time × Space d
   - B.1. Time derivatives
     - B.1.1. Composition with a CLM
@@ -55,17 +59,62 @@ We put these results in the namespace `Space` by convention.
 
 open Physlib
 
-namespace Space
-
 /-!
 
-## A. Derivatives involving time and space
+## A. The coordinate product and derivatives involving time and space
 
 -/
 
 /-!
 
-### A.1. Space and time derivatives in terms of curried functions
+### A.1. The `TimeAndSpace` coordinate product
+
+-/
+
+/-- Euclidean spacetime as the product of time and `d`-dimensional space. -/
+abbrev TimeAndSpace (d : ℕ := 3) := Time × Space d
+
+namespace TimeAndSpace
+
+variable {d : ℕ}
+
+/-- The time-coordinate projection from `TimeAndSpace d`. -/
+noncomputable def time {d : ℕ} : TimeAndSpace d →L[ℝ] Time :=
+  ContinuousLinearMap.fst ℝ Time (Space d)
+
+/-- The spatial-coordinate projection from `TimeAndSpace d`. -/
+noncomputable def space {d : ℕ} : TimeAndSpace d →L[ℝ] Space d :=
+  ContinuousLinearMap.snd ℝ Time (Space d)
+
+@[simp]
+lemma time_apply (tx : TimeAndSpace d) :
+    time tx = tx.1 := rfl
+
+@[simp]
+lemma space_apply (tx : TimeAndSpace d) :
+    space tx = tx.2 := rfl
+
+/-- The time projection is nonexpanding for the product metric. -/
+lemma dist_time_le (tx ty : TimeAndSpace d) :
+    dist (time tx) (time ty) ≤ dist tx ty := by
+  change dist tx.1 ty.1 ≤ dist tx ty
+  rw [Prod.dist_eq]
+  exact le_max_left (dist tx.1 ty.1) (dist tx.2 ty.2)
+
+/-- The spatial projection is nonexpanding for the product metric. -/
+lemma dist_space_le (tx ty : TimeAndSpace d) :
+    dist (space tx) (space ty) ≤ dist tx ty := by
+  change dist tx.2 ty.2 ≤ dist tx ty
+  rw [Prod.dist_eq]
+  exact le_max_right (dist tx.1 ty.1) (dist tx.2 ty.2)
+
+end TimeAndSpace
+
+namespace Space
+
+/-!
+
+### A.2. Space and time derivatives in terms of curried functions
 
 -/
 
@@ -95,7 +144,7 @@ lemma fderiv_time_eq_fderiv_curry {M} [NormedAddCommGroup M] [NormedSpace ℝ M]
 
 /-!
 
-### A.2. Commuting time and space derivatives
+### A.3. Commuting time and space derivatives
 
 -/
 
@@ -147,7 +196,7 @@ lemma time_deriv_comm_space_deriv {d i} {M} [NormedAddCommGroup M] [NormedSpace 
 
 /-!
 
-### A.3. Differentiablity conditions
+### A.4. Differentiablity conditions
 
 -/
 
@@ -207,7 +256,7 @@ lemma curl_differentiable_time
 
 /-!
 
-### A.4. Time derivative commute with curl
+### A.5. Time derivative commute with curl
 
 -/
 open Time
@@ -243,7 +292,7 @@ lemma time_deriv_curl_commute (fₜ : Time → Space → EuclideanSpace ℝ (Fin
 
 /-!
 
-### A.5. Constant of time deriative and space derivatives zero
+### A.6. Constant of time deriative and space derivatives zero
 
 -/
 
@@ -310,7 +359,7 @@ lemma const_of_time_deriv_space_deriv_eq_zero {d} {M} [NormedAddCommGroup M] [No
 
 /-!
 
-### A.6. Equal up to a constant of time and space derivatives equal
+### A.7. Equal up to a constant of time and space derivatives equal
 
 -/
 
