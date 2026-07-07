@@ -168,6 +168,7 @@ public import Physlib.Particles.StandardModel.AnomalyCancellation.NoGrav.One.Lem
 public import Physlib.Particles.StandardModel.AnomalyCancellation.NoGrav.One.LinearParameterization
 public import Physlib.Particles.StandardModel.AnomalyCancellation.Permutations
 public import Physlib.Particles.StandardModel.Basic
+public import Physlib.Particles.StandardModel.Fermions.QuarkDoublet
 public import Physlib.Particles.StandardModel.HiggsBoson.Basic
 public import Physlib.Particles.StandardModel.HiggsBoson.EffectivePotential
 public import Physlib.Particles.StandardModel.HiggsBoson.Potential
