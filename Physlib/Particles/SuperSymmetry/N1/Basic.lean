@@ -344,6 +344,7 @@ def chiralTensor : ConjTensorSpecies ℂ ChiralColor Unit (chiralModule (ι := �
   contr_tmul_symm c x y := by cases c <;> exact deltaContr₂_comm _ _ _ _
   unit_symm c := by cases c <;> exact deltaUnit₂_symm _ _
   contr_unit c x := by cases c <;> exact deltaContr₂_unit _ _ x
+  conj_basis_equivariant := by simp [chiralRep, Finsupp.single_apply]
   contr_metric c := by cases c <;> exact deltaContr₂_metric _ _
   -- Conjugation data: `bar` flips holomorphy, the index set is shared (`rfl`), `star δ = δ`.
   bar := ChiralColor.bar
@@ -418,7 +419,7 @@ lemma toField_conjScalar (t : (chiralTensor (ι := ι)).Tensor ![]) :
   change componentMap (S := (chiralTensor (ι := ι)).toTensorSpecies)
       ((chiralTensor (ι := ι)).bar ∘ ![]) ((chiralTensor (ι := ι)).conjT t) (fun j => Fin.elim0 j) =
     star ((basis (S := (chiralTensor (ι := ι)).toTensorSpecies) ![]).repr t (fun j => Fin.elim0 j))
-  rw [ConjTensorSpecies.componentMap_conjT (S := chiralTensor (ι := ι))]
+  erw [ConjTensorSpecies.componentMap_conjT (S := chiralTensor (ι := ι))]
   rfl
 
 /-- Component formula for the holomorphic covector conjugate: the `![I]` basis component of
@@ -431,7 +432,7 @@ lemma repr_conjChiralCovector
   rw [conjChiralCovector, permT_basis_repr_symm_apply]
   change componentMap (S := (chiralTensor (ι := ι)).toTensorSpecies)
       ((chiralTensor (ι := ι)).bar ∘ ![chiralDown]) ((chiralTensor (ι := ι)).conjT t) _ = _
-  rw [ConjTensorSpecies.componentMap_conjT (S := chiralTensor (ι := ι))]
+  erw [ConjTensorSpecies.componentMap_conjT (S := chiralTensor (ι := ι))]
   apply congrArg star
   apply congrArg (fun idx => componentMap (S := (chiralTensor (ι := ι)).toTensorSpecies)
     ![chiralDown] t idx)
@@ -444,7 +445,6 @@ lemma repr_conjChiralCovector
 lemma conjChiralCovector_add
     (t₁ t₂ : (chiralTensor (ι := ι)).Tensor ![chiralDown]) :
     conjChiralCovector (t₁ + t₂) = conjChiralCovector t₁ + conjChiralCovector t₂ := by
-  rw [conjChiralCovector, (chiralTensor (ι := ι)).conjT_add]
   simp [conjChiralCovector, map_add]
 
 /-- Conjugation of a holomorphic covector is conjugate-linear: a scalar `r` pulls out as
@@ -453,7 +453,6 @@ lemma conjChiralCovector_add
 lemma conjChiralCovector_smul (r : ℂ)
     (t : (chiralTensor (ι := ι)).Tensor ![chiralDown]) :
     conjChiralCovector (r • t) = star r • conjChiralCovector t := by
-  rw [conjChiralCovector, (chiralTensor (ι := ι)).conjT_smul]
   simp [conjChiralCovector]
 
 end Conjugation

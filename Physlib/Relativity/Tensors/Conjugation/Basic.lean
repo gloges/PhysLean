@@ -57,10 +57,10 @@ genuinely bilinear and `IsHermitian` an honest conjugate-transpose.
 ## iii. Table of contents
 
 - A. The conjugation structure
-- B. Conjugation of tensors
-- C. The involution law
-- D. Commutation with contraction
-- E. The slot conjugation
+- B. The conjugation of vectors
+- C. Conjugation of tensors
+- D. The involution law
+- E. Commutation with contraction
 - F. Hermitian pairings
 
 -/
@@ -105,6 +105,11 @@ structure ConjTensorSpecies (k : Type) [CommRing k] [StarRing k] (C : Type) (G :
   Conjugation conjugates components in an adapted basis; it never permutes labels, so the label
   sets of `c` and `bar c` coincide. -/
   barIdx_eq : ∀ c, basisIdx (bar c) = basisIdx c
+  /-- Conjugation is equivariant: it preserves the action of the group. -/
+  conj_basis_equivariant : ∀ (c : C) (g : G) (i j : basisIdx c),
+      (b c).repr (rep c g (b c i)) j = star ((b (bar c)).repr
+      (rep (bar c) g (b (bar c) (Equiv.cast (barIdx_eq c).symm i)))
+      (Equiv.cast (barIdx_eq c).symm j))
   /-- Conjugation is compatible with contraction at the basis level: `star` of the contraction
   coefficient at colour `d` equals the coefficient at the conjugate colour `bar d`, with basis
   labels carried over by `barIdx_eq`. For a real (δ) contraction this is `star δ = δ`. -/
@@ -128,7 +133,53 @@ TODO "Extend `complexLorentzTensor` to a  `ConjTensorSpecies`."
 TODO "Extend `realLorentzTensor` to a `ConjTensorSpecies`."
 /-!
 
-## B. Conjugation of tensors
+## B. The conjugation of vectors
+
+`conjEquiv` is the conjugate-linear isomorphism `V c ≃ₛₗ[starRingEnd k] V (bar c)`: read off the
+coordinates of a vector in the species basis, conjugate them (`star`), and re-seat them as the
+coordinates at the conjugate colour (the index sets agree by `barIdx_eq`). It is the single-slot
+shadow of `conjT`, packaged as a bundled equivalence so the Hermitian-metric layer can apply it to a
+metric slot. Semilinearity is built in via the coordinate `star`; invertibility is `star`'s
+involutivity together with `bar`'s.
+
+-/
+
+/-- The conjugate-linear slot isomorphism `V c ≃ₛₗ[starRingEnd k] V (bar c)`: conjugate the
+coordinates in the species basis and relabel to the conjugate colour via `barIdx_eq`. -/
+def conjEquiv {c : C} : V c ≃ₛₗ[starRingEnd k] V (S.bar c) :=
+  ((b c).repr.trans (ConjModule.starFinsupp (k := k))).trans
+    ((Finsupp.domLCongr (Equiv.cast (S.barIdx_eq c).symm)).trans (b (S.bar c)).repr.symm)
+
+/-- `conjEquiv` on a basis vector: `b c i ↦ b (bar c) i` (relabelled through `barIdx_eq`), since the
+basis coordinates of `b c i` are the indicator at `i` and `star` fixes `0` and `1`. -/
+@[simp] lemma conjEquiv_basis {c : C} (i : basisIdx c) :
+    S.conjEquiv (b c i) = b (S.bar c) (Equiv.cast (S.barIdx_eq c).symm i) := by
+  simp [conjEquiv, ConjModule.starFinsupp, Finsupp.domLCongr_apply, Finsupp.mapRange_single]
+
+lemma conjEquiv_basis_repr {c : C} (v : V c) (φ : basisIdx (S.bar c)) :
+    (b (S.bar c)).repr (S.conjEquiv v) φ
+      = star ((b c).repr v (Equiv.cast (S.barIdx_eq c) φ)) := by
+  simp only [conjEquiv, LinearEquiv.trans_apply, LinearEquiv.apply_symm_apply,
+    Finsupp.domLCongr_apply, Finsupp.domCongr_apply, Finsupp.equivMapDomain_apply,
+    ConjModule.starFinsupp]
+  rfl
+
+lemma conjEquiv_equivariant {c : C} (g : G) (v : V c) :
+    S.conjEquiv (rep c g v) = rep (S.bar c) g (S.conjEquiv v) := by
+  rw [← (b c).sum_repr v]
+  simp only [map_sum, map_smul, LinearEquiv.map_smulₛₗ, conjEquiv_basis, Equiv.cast_apply]
+  congr
+  funext x
+  congr 1
+  generalize_proofs h1 h2
+  apply (b (S.bar c)).repr.injective
+  ext j'
+  obtain ⟨j, rfl⟩ := (Equiv.cast (S.barIdx_eq c).symm).surjective j'
+  simpa [conjEquiv_basis_repr] using congrArg star (S.conj_basis_equivariant c g x j)
+
+/-!
+
+## C. Conjugation of tensors
 
 We define the conjugation map `conjT` through its action on components, record that it conjugates
 components in place (`componentMap_conjT`), and show it is `conj`-semilinear and additive.
@@ -137,35 +188,64 @@ components in place (`componentMap_conjT`), and show it is `conj`-semilinear and
 
 /-- Reindex component labels of `bar ∘ c` back to `c`, slotwise via the cast `barIdx_eq`. -/
 def componentReindex {n : ℕ} (c : Fin n → C) :
-    ComponentIdx (S := S.toTensorSpecies) (S.bar ∘ c) ≃ ComponentIdx (S := S.toTensorSpecies) c :=
+    ComponentIdx (S := S.toTensorSpecies) (fun i => S.bar (c i)) ≃
+      ComponentIdx (S := S.toTensorSpecies) c :=
   Equiv.piCongrRight fun i => Equiv.cast (S.barIdx_eq (c i))
 
 /-- Conjugation of a tensor: conjugate the components and reindex the basis to the conjugate
-colours. `conj`-semilinear by construction (see `conjT_smul`). -/
-def conjT {n : ℕ} {c : Fin n → C} (t : S.Tensor c) : S.Tensor (S.bar ∘ c) :=
-  ofComponents (S.bar ∘ c)
+colours.  -/
+def conjT {n : ℕ} {c : Fin n → C} : S.Tensor c →ₛₗ[starRingEnd k]
+    S.Tensor (fun i => S.bar (c i)) where
+  toFun t := ofComponents (fun i => S.bar (c i))
     (fun b => star (componentMap c t (S.componentReindex c b)))
+  map_add' t₁ t₂ := by
+    apply componentMap_ext
+    intro b
+    simp  [map_add, Pi.add_apply, star_add]
+  map_smul' r t := by
+    apply componentMap_ext
+    intro b
+    simp only [map_smul, Pi.smul_apply, smul_eq_mul, star_mul', componentMap_ofComponents]
+    rfl
+
+lemma conjT_apply {n : ℕ} {c : Fin n → C} (t : S.Tensor c) :
+    S.conjT t = ofComponents (fun i => S.bar (c i))
+      (fun b => star (componentMap c t (S.componentReindex c b))) :=
+  rfl
 
 /-- Components of a conjugated tensor: the `star` of the original components, reindexed. -/
 @[simp] lemma componentMap_conjT {n : ℕ} {c : Fin n → C} (t : S.Tensor c)
-    (b : ComponentIdx (S := S.toTensorSpecies) (S.bar ∘ c)) :
-    componentMap (S.bar ∘ c) (S.conjT t) b
+    (b : ComponentIdx (S := S.toTensorSpecies) (fun i => S.bar (c i))) :
+    componentMap (fun i => S.bar (c i)) (S.conjT t) b
       = star (componentMap c t (S.componentReindex c b)) := by
-  simp only [conjT, componentMap_ofComponents]
+  simp [conjT_apply, componentMap_ofComponents]
 
-/-- Conjugation is semilinear: scalar multiplication pulls out as `star r`. -/
-@[simp] lemma conjT_smul {n : ℕ} {c : Fin n → C} (r : k) (t : S.Tensor c) :
-    S.conjT (r • t) = star r • S.conjT t := by
+
+lemma conjT_basis {n : ℕ} {c : Fin n → C} (i : ComponentIdx (S := S.toTensorSpecies) c) :
+    S.conjT (basis c i) = basis (fun i => S.bar (c i)) ((S.componentReindex c).symm i) := by
   apply componentMap_ext
   intro b
-  simp only [componentMap_conjT, map_smul, Pi.smul_apply, smul_eq_mul, star_mul']
+  simp [componentMap_conjT]
+  simp only [componentMap_eq_repr, Basis.repr_self, componentReindex, Finsupp.single_apply]
+  split_ifs with h h2 h3
+  · simp
+  · subst h
+    simp at h2
+  · subst h3
+    simp at h
+  · simp
 
-/-- Conjugation is additive. -/
-@[simp] lemma conjT_add {n : ℕ} {c : Fin n → C} (t₁ t₂ : S.Tensor c) :
-    S.conjT (t₁ + t₂) = S.conjT t₁ + S.conjT t₂ := by
+lemma conjT_pure {n : ℕ} {c : Fin n → C} (p : Tensor.Pure S.toTensorSpecies c) :
+    S.conjT p.toTensor = Pure.toTensor (fun i => S.conjEquiv (p i)) := by
   apply componentMap_ext
-  intro b
-  simp only [componentMap_conjT, map_add, Pi.add_apply, star_add]
+  intro φ
+  simp only [componentMap_conjT, componentMap_pure, Pure.componentMap_apply]
+  simp [Pure.component]
+  congr
+  funext x
+  rw [S.conjEquiv_basis_repr]
+  rfl
+
 
 /-- Componentwise criterion for `conjT t = permT σ h t'`. The conjugate of `t` equals the
 recolouring `permT σ h t'` exactly when, at every component, the `star`-conjugated reindexed
@@ -174,12 +254,12 @@ component of `t` matches the corresponding component of `permT σ h t'`. This pa
 proofs downstream would otherwise repeat by hand; the caller is left only with the species-specific
 permutation bookkeeping on the right-hand side. -/
 lemma conjT_eq_permT_iff {n m : ℕ} {c : Fin n → C} {c' : Fin m → C}
-    {σ : Fin n → Fin m} (h : IsReindexing c' (S.bar ∘ c) σ)
+    {σ : Fin n → Fin m} (h : IsReindexing c' (fun i => S.bar (c i)) σ)
     (t : S.Tensor c) (t' : S.Tensor c') :
     S.conjT t = permT σ h t' ↔
-      ∀ φ : ComponentIdx (S := S.toTensorSpecies) (S.bar ∘ c),
+      ∀ φ : ComponentIdx (S := S.toTensorSpecies) (fun i => S.bar (c i)),
         star (componentMap c t (S.componentReindex c φ))
-          = (Tensor.basis (S.bar ∘ c)).repr (permT σ h t') φ := by
+          = (Tensor.basis (fun i => S.bar (c i))).repr (permT σ h t') φ := by
   constructor
   · intro H φ
     rw [← H, ← componentMap_eq_repr, componentMap_conjT]
@@ -189,9 +269,17 @@ lemma conjT_eq_permT_iff {n m : ℕ} {c : Fin n → C} {c' : Fin m → C}
     rw [componentMap_conjT]
     exact H φ
 
+lemma conjT_equivariant {n : ℕ} {c : Fin n → C} (g : G) (t : S.Tensor c) :
+    S.conjT (g • t) = g • S.conjT t := by
+  induction' t using induction_on_basis with b r t ht t1 t2 ht1 ht2
+  · simp [basis_apply, actionT_pure, conjT_pure, Pure.actionP_eq, conjEquiv_equivariant]
+  · simp
+  · simp [LinearMap.map_smulₛₗ, actionT_smul, ht]
+  · simp [ht1, ht2]
+
 /-!
 
-## C. The involution law
+## D. The involution law
 
 We prove `conjT_conjT`: conjugating a tensor twice returns it, up to the identity recolouring
 `bar ∘ bar ∘ c = c`. The supporting lemmas reconcile the iterated basis-label casts.
@@ -209,7 +297,7 @@ private lemma barIdx_involutive_symm (c : C) (y : basisIdx (S.bar (S.bar c))) :
 /-- The identity permutation satisfies `IsReindexing` from `c` to `bar ∘ bar ∘ c`, as `bar` is an
 involution. -/
 lemma isReindexing_bar_bar {n : ℕ} (c : Fin n → C) :
-    IsReindexing c (S.bar ∘ S.bar ∘ c) (id : Fin n → Fin n) :=
+    IsReindexing c (fun i => S.bar (S.bar (c i))) (id : Fin n → Fin n) :=
   ⟨Function.bijective_id, fun i => (S.bar_involution (c i)).symm⟩
 
 /-- Conjugation is an involution: conjugating twice returns the original tensor, up to the
@@ -220,7 +308,7 @@ lemma conjT_conjT {n : ℕ} {c : Fin n → C} (t : S.Tensor c) :
   apply componentMap_ext
   intro φ
   rw [componentMap_conjT, componentMap_conjT, star_star]
-  rw [componentMap_eq_repr (S.bar ∘ S.bar ∘ c), permT_basis_repr_symm_apply,
+  rw [componentMap_eq_repr (fun i => S.bar (S.bar (c i))), permT_basis_repr_symm_apply,
     ← componentMap_eq_repr c]
   refine congrArg (fun ψ => (componentMap c) t ψ) ?_
   funext i
@@ -228,11 +316,11 @@ lemma conjT_conjT {n : ℕ} {c : Fin n → C} (t : S.Tensor c) :
     IsReindexing.inv_apply_apply id _ i
   show Equiv.cast (S.barIdx_eq (c i)) (Equiv.cast (S.barIdx_eq (S.bar (c i))) (φ i)) = _
   rw [S.barIdx_involutive_symm]
-  exact basisIdxCongr_heq_arg _ _ (by rw [hinv]; exact HEq.rfl)
+  exact basisIdxCongr_heq_arg _ _ (by rw [hinv])
 
 /-!
 
-## D. Commutation with contraction
+## E. Commutation with contraction
 
 We prove `conjT_contrT`: conjugation commutes with contracting two dual-coloured slots. The
 contraction expands as a sum over the contracted index pair, and `conj_contrComm` matches the
@@ -255,7 +343,7 @@ lemma conjT_contrT {n : ℕ} {c : Fin (n + 1 + 1) → C} (i j : Fin (n + 1 + 1))
   apply componentMap_ext
   intro φ
   rw [componentMap_conjT, componentMap_eq_repr, Tensor.contrT_basis_repr_apply]
-  have hrhs := Tensor.contrT_basis_repr_apply (S := S.toTensorSpecies) (c := S.bar ∘ c)
+  have hrhs := Tensor.contrT_basis_repr_apply (S := S.toTensorSpecies) (c := fun i => S.bar (c i))
     (i := i) (j := j) (S.contrCond_bar h) (S.conjT t) φ
   rw [componentMap_eq_repr]
   refine Eq.trans ?_ hrhs.symm
@@ -270,10 +358,11 @@ lemma conjT_contrT {n : ℕ} {c : Fin (n + 1 + 1) → C} (i j : Fin (n + 1 + 1))
     simp only [ComponentIdx.DropPairSection, Finset.mem_filter, Finset.mem_univ, true_and]
     exact (Equiv.apply_eq_iff_eq (S.componentReindex (c ∘ i.succSuccAbove j))).symm
   refine (Finset.sum_equiv (Equiv.subtypeEquiv (S.componentReindex c) hmem)
-    (fun _ => by simp) ?_).symm
+    ?_ ?_).symm
+  · exact fun _ => iff_of_true (Finset.mem_attach _ _) (Finset.mem_attach _ _)
   intro b'' _
   simp only [Equiv.subtypeEquiv_apply]
-  rw [← componentMap_eq_repr (S.bar ∘ c), componentMap_conjT, componentMap_eq_repr c t,
+  erw [← componentMap_eq_repr (S.bar ∘ c), componentMap_conjT, componentMap_eq_repr c t,
     star_mul']
   congr 1
   rw [S.conj_contrComm (c i) ((S.componentReindex c b''.1) i)
@@ -285,30 +374,6 @@ lemma conjT_contrT {n : ℕ} {c : Fin (n + 1 + 1) → C} (i j : Fin (n + 1 + 1))
   exact congrArg (b (S.τ (S.bar (c i)))) (basisIdxCongr_heq_arg _ _
     (HEq.symm ((cast_heq _ _).trans ((cast_heq _ _).trans (cast_heq _ _)))))
 
-/-!
-
-## E. The slot conjugation
-
-`conjEquiv` is the conjugate-linear isomorphism `V c ≃ₛₗ[starRingEnd k] V (bar c)`: read off the
-coordinates of a vector in the species basis, conjugate them (`star`), and re-seat them as the
-coordinates at the conjugate colour (the index sets agree by `barIdx_eq`). It is the single-slot
-shadow of `conjT`, packaged as a bundled equivalence so the Hermitian-metric layer can apply it to a
-metric slot. Semilinearity is built in via the coordinate `star`; invertibility is `star`'s
-involutivity together with `bar`'s.
-
--/
-
-/-- The conjugate-linear slot isomorphism `V c ≃ₛₗ[starRingEnd k] V (bar c)`: conjugate the
-coordinates in the species basis and relabel to the conjugate colour via `barIdx_eq`. -/
-def conjEquiv {c : C} : V c ≃ₛₗ[starRingEnd k] V (S.bar c) :=
-  ((b c).repr.trans (ConjModule.starFinsupp (k := k))).trans
-    ((Finsupp.domLCongr (Equiv.cast (S.barIdx_eq c).symm)).trans (b (S.bar c)).repr.symm)
-
-/-- `conjEquiv` on a basis vector: `b c i ↦ b (bar c) i` (relabelled through `barIdx_eq`), since the
-basis coordinates of `b c i` are the indicator at `i` and `star` fixes `0` and `1`. -/
-@[simp] lemma conjEquiv_basis {c : C} (i : basisIdx c) :
-    S.conjEquiv (b c i) = b (S.bar c) (Equiv.cast (S.barIdx_eq c).symm i) := by
-  simp [conjEquiv, ConjModule.starFinsupp, Finsupp.domLCongr_apply, Finsupp.mapRange_single]
 
 /-!
 
