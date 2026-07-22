@@ -496,7 +496,12 @@ public import Physlib.Units.Basic
 public import Physlib.Units.Dimension
 public import Physlib.Units.Examples
 public import Physlib.Units.FDeriv
+public import Physlib.Units.ISQBridge
+public import Physlib.Units.ISQDimensionBase
 public import Physlib.Units.Integral
+public import Physlib.Units.LTMCTDimensionBase
+public import Physlib.Units.ParametricDimensionExamples
+public import Physlib.Units.ParametricUnits
 public import Physlib.Units.UnitDependent
 public import Physlib.Units.WithDim.Area
 public import Physlib.Units.WithDim.Basic
