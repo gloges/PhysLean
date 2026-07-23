@@ -1,10 +1,12 @@
 /-
 Copyright (c) 2026 Gregory J. Loges. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Gregory J. Loges
+Authors: Adam Bornemann, Gregory J. Loges
 -/
 module
 
+public import Mathlib.Analysis.Distribution.SchwartzSpace.Basic
+public import Mathlib.Analysis.Distribution.Sobolev
 public import Mathlib.Analysis.InnerProductSpace.Dual
 public import Mathlib.MeasureTheory.Function.L2Space
 public import Physlib.SpaceAndTime.Space.Module
@@ -64,6 +66,7 @@ noncomputable section
 namespace QuantumMechanics
 
 open Function InnerProductSpace MeasureTheory Measure Set
+open scoped SchwartzMap
 
 /-!
 ## A. SpaceDHilbertSpace
@@ -217,6 +220,15 @@ end
 /-!
 ### A.5. Misc.
 -/
+
+/-- The tempered distribution associated to a state. -/
+abbrev toTemperedDistribution [μ.HasTemperateGrowth]
+    (ψ : SpaceDHilbertSpace d μ) : 𝓢'(Space d, ℂ) := Lp.toTemperedDistribution ψ
+
+/-- The embedding of states into tempered distributions as a continuous linear map. -/
+abbrev toTemperedDistributionCLM (d : ℕ) (μ : Measure (Space d) := volume)
+    [μ.HasTemperateGrowth] : SpaceDHilbertSpace d μ →L[ℂ] 𝓢'(Space d, ℂ) :=
+  Lp.toTemperedDistributionCLM ℂ μ 2
 
 open Filter in
 lemma tendsto_zero_iff_tendsto_zero_lintegral_enorm_sq

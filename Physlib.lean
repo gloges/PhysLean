@@ -311,6 +311,7 @@ public import Physlib.QuantumMechanics.HilbertSpaces.SpaceD.DirichletSubmodule
 public import Physlib.QuantumMechanics.HilbertSpaces.SpaceD.Fourier
 public import Physlib.QuantumMechanics.HilbertSpaces.SpaceD.PolyBddSchwartzSubmodule
 public import Physlib.QuantumMechanics.HilbertSpaces.SpaceD.SchwartzSubmodule
+public import Physlib.QuantumMechanics.HilbertSpaces.SpaceD.SobolevSubmodule
 public import Physlib.QuantumMechanics.Hydrogen.Basic
 public import Physlib.QuantumMechanics.Hydrogen.LaplaceRungeLenzVector
 public import Physlib.QuantumMechanics.InfiniteSquareWell.Basic
