@@ -519,6 +519,7 @@ lemma mulOperator_sub_ge (μ : Measure (Space d)) (f g : Space d → ℂ) :
   le_of_eq_of_le (by simp [sub_eq_add_neg]) (mulOperator_add_ge μ f (-g))
 
 /-- `(𝓜 μ g).domain = ⊤` is a sufficient condition to ensure equality in `mulOperator_sub_ge`. -/
+@[simp]
 lemma mulOperator_sub_eq
     {μ : Measure (Space d)} (f : Space d → ℂ) {g : Space d → ℂ} (h : (𝓜 μ g).domain = ⊤) :
     𝓜 μ (f - g) = 𝓜 μ f - 𝓜 μ g := by
