@@ -387,7 +387,7 @@ lemma mulOperator_smul_eq (μ : Measure (Space d)) {c : ℂ} (hc : c ≠ 0) (f :
     𝓜 μ (c • f) = c • 𝓜 μ f := by
   refine (eq_of_le_of_domain_eq (mulOperator_smul_ge μ c f) ?_).symm
   ext
-  simp [mem_mulOperator_domain_iff, MemHS.const_smul_iff hc]
+  simp [mem_mulOperator_domain_iff, memHS_const_smul_iff hc]
 
 /-- Negation and `mulOperator` commute. -/
 @[simp]
