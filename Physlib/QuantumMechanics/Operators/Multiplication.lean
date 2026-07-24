@@ -396,7 +396,7 @@ lemma mulOperator_isClosed {μ : Measure (Space d)} [IsFiniteMeasureOnCompacts �
 
 /-- The multiplication operator of the zero function is the zero operator (domain `⊤`). -/
 @[simp]
-lemma mulOperator_zero (μ : Measure (Space d)) [NeZero μ] : 𝓜 μ 0 = 0 := by
+lemma mulOperator_zero (μ : Measure (Space d)) : 𝓜 μ 0 = 0 := by
   ext ψ hψ hψ'
   · simp [mem_mulOperator_domain_iff]
   · refine (mulOperator_apply_ae ⟨ψ, hψ⟩).trans ?_
