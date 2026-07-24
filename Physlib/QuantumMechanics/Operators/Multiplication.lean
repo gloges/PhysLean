@@ -37,9 +37,10 @@ through multiplication in the Fourier domain: see `Operators/Derivative.lean`.
 - `mulOperator_isSelfAdjoint` : The multiplication operator of a real function is self-adjoint.
 - `mulOperator_isUnbounded` : Multiplication operators with maximal domain are unbounded
     (i.e. densely defined and closable).
-- `mulOperator_smul_eq` : `𝓜 μ (c • f) = c • 𝓜 μ f` for non-zero `c`.
-- `mulOperator_add_ge` : `𝓜 μ (f + g)` is an extension of `𝓜 μ f + 𝓜 μ g`.
-- `mulOperator_compRestricted_le` : `𝓜 μ (f • g)` is an extension of `𝓜 μ f * 𝓜 μ g`.
+- `mulOperator_isClosed` : Multiplication operators with maximal domain are closed.
+- `mulOperator_const_smul_eq` : `𝓜 μ (c • f) = c • 𝓜 μ f` for non-zero `c`.
+- `mulOperator_add_ge` / `mulOperator_sub_ge` : `𝓜 μ (f ± g)` is an extension of `𝓜 μ f ± 𝓜 μ g`.
+- `mulOperator_smul_ge` : `𝓜 μ (f • g)` is an extension of `𝓜 μ f * 𝓜 μ g`.
 
 ## iii. Table of contents
 
@@ -48,7 +49,7 @@ through multiplication in the Fourier domain: see `Operators/Derivative.lean`.
 - C. Adjoint
   - C.1. Self-adjoint
 - D. Closed & unbounded
-- E. Structural properties
+- E. Basic properties
   - E.1. Smul & neg
   - E.2. Add & sub
   - E.3. Composition
@@ -90,7 +91,7 @@ def mulOperator (μ : Measure (Space d)) (f : Space d → ℂ) :
       simp_all [mul_add]
     zero_mem' := by
       refine MemHS.zero.ae_eq ?_
-      filter_upwards [AEEqFun.coeFn_zero (μ := μ) (β := ℂ)]
+      filter_upwards [coeFn_zero]
       simp_all
     smul_mem' c ψ hψ := by
       refine (hψ.const_smul c).ae_eq ?_
@@ -390,8 +391,26 @@ lemma mulOperator_isClosed {μ : Measure (Space d)} [IsFiniteMeasureOnCompacts �
   congr 1; ext; simp
 
 /-!
-## E. Structural properties
+## E. Basic properties
 -/
+
+/-- The multiplication operator of the zero function is the zero operator (domain `⊤`). -/
+@[simp]
+lemma mulOperator_zero (μ : Measure (Space d)) [NeZero μ] : 𝓜 μ 0 = 0 := by
+  ext ψ hψ hψ'
+  · simp [mem_mulOperator_domain_iff]
+  · refine (mulOperator_apply_ae ⟨ψ, hψ⟩).trans ?_
+    simpa using coeFn_zero.symm
+
+/-- `μ`-a.e. equal functions give rise to the same multiplication operator. -/
+lemma mulOperator_eq_of_congr_ae {μ : Measure (Space d)} {f g : Space d → ℂ} (h : f =ᵐ[μ] g) :
+    𝓜 μ f = 𝓜 μ g := by
+  ext ψ hψ hψ'
+  · exact memHS_congr_ae <| h.smul (ext_iff.mp rfl)
+  · filter_upwards [h, mulOperator_apply_ae ⟨ψ, hψ⟩, mulOperator_apply_ae ⟨ψ, hψ'⟩]
+    simp_all
+
+TODO "Upgrade mulOperator_eq_of_congr_ae to an iff : 𝓜 μ f = 𝓜 μ g ↔ f =ᵐ[μ] g."
 
 /-!
 ### E.1. Smul & neg

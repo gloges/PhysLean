@@ -227,6 +227,8 @@ section
 
 variable (c : ℂ) (ψ φ : SpaceDHilbertSpace d μ)
 
+lemma coeFn_zero : ⇑(0 : SpaceDHilbertSpace d μ) =ᵐ[μ] 0 := Lp.coeFn_zero _ _ _
+
 lemma coeFn_neg : ⇑(-ψ) =ᵐ[μ] -ψ := Lp.coeFn_neg _
 
 lemma coeFn_add : ⇑(ψ.val + φ.val) =ᵐ[μ] ψ + φ := Lp.coeFn_add _ _
