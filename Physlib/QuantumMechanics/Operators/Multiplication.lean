@@ -47,7 +47,7 @@ through multiplication in the Fourier domain: see `Operators/Derivative.lean`.
 - B. Domain
 - C. Adjoint
   - C.1. Self-adjoint
-- D. Closable & unbounded
+- D. Closed & unbounded
 - E. Structural properties
   - E.1. Smul & neg
   - E.2. Add & sub
@@ -364,7 +364,7 @@ lemma mulOperator_isSelfAdjoint_ofReal {μ : Measure (Space d)} [IsFiniteMeasure
   rw [isSelfAdjoint_def, mulOperator_adjoint_eq_conj hf, hf']
 
 /-!
-## D. Closable & unbounded
+## D. Closed & unbounded
 -/
 
 /-- Multiplication operators of `μ`-a.e. strongly measurable functions are closable. -/
@@ -380,6 +380,14 @@ lemma mulOperator_isUnbounded {μ : Measure (Space d)} [IsFiniteMeasureOnCompact
     {f : Space d → ℂ} (hf : AEStronglyMeasurable f μ) :
     (𝓜 μ f).IsUnbounded :=
   ⟨mulOperator_hasDenseDomain hf, mulOperator_isClosable hf⟩
+
+/-- Multiplication operators of `μ`-a.e. strongly measurable functions are closed. -/
+lemma mulOperator_isClosed {μ : Measure (Space d)} [IsFiniteMeasureOnCompacts μ]
+    {f : Space d → ℂ} (hf : AEStronglyMeasurable f μ) :
+    (𝓜 μ f).IsClosed := by
+  apply (mulOperator_isUnbounded hf).isClosed_iff.mpr
+  rw [mulOperator_adjoint_eq_conj hf, mulOperator_adjoint_eq_conj (by fun_prop)]
+  congr 1; ext; simp
 
 /-!
 ## E. Structural properties
